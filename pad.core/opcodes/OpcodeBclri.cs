@@ -22,7 +22,7 @@ namespace pad.core.opcodes
             var bitIndex = dataReader.ReadByte();
             var arg = ParseArg(header, 10, dataReader, 0, addresses, AddressingModes.Default);
 
-            return KeyValuePair.Create($"BCLR #{bitIndex},{arg}", addresses);
+            return KeyValuePair.Create($"BCLR.B #{bitIndex},{arg}", addresses);
         }
     }
 }

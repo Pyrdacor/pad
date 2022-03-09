@@ -93,6 +93,18 @@ namespace pad.core.opcodes
             {
                 new OpcodeLea(), new OpcodeChk()
             });
+            OpcodesBy4BitHeader.Add(0x50, new IOpcode[]
+            {
+                new OpcodeAddq(), new OpcodeSubq(), new OpcodeScc(), new OpcodeDbcc()
+            });
+            OpcodesBy4BitHeader.Add(0x60, new IOpcode[]
+            {
+                new OpcodeBra(), new OpcodeBsr(), new OpcodeBcc()
+            });
+            OpcodesBy4BitHeader.Add(0x70, new IOpcode[]
+            {
+                new OpcodeMoveq()
+            });
         }
 
         public void Convert(IDataReader dataReader, Action<string> asmOutputHandler)

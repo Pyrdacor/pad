@@ -22,7 +22,7 @@ namespace pad.core.opcodes
             var reg = (header >> 9) & 0x7;
             var arg = ParseArg(header, 10, dataReader, 4, addresses, AddressingModes.Default);
 
-            return KeyValuePair.Create($"BSET D{reg},{arg}", addresses);
+            return KeyValuePair.Create($"BSET.L D{reg},{arg}", addresses);
         }
     }
 }

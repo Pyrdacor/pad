@@ -1,4 +1,5 @@
-﻿using pad.core.interfaces;
+﻿using pad.core.extensions;
+using pad.core.interfaces;
 
 namespace pad.core.opcodes
 {
@@ -19,7 +20,9 @@ namespace pad.core.opcodes
         static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
         {
             var addresses = new List<uint>();
-            var arg = ParseArg(header, 10, dataReader, 1, addresses, AddressingModes.Default);
+            var addressingModes = AddressingModes.All.Exclude(AddressingModes.DataRegister, AddressingModes.AddressRegister,
+                AddressingModes.AddressWithPost, AddressingModes.AddressWithPre, AddressingModes.Immediate);
+            var arg = ParseArg(header, 10, dataReader, 1, addresses, addressingModes);
 
             return KeyValuePair.Create($"PEA {arg}", addresses);
         }

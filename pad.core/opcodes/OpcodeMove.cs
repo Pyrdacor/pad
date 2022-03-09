@@ -37,7 +37,7 @@ namespace pad.core.opcodes
                 3 => Tuple.Create(2, "W", "W"),
                 _ => throw new InvalidDataException("Invalid MOVE instruction data.")
             };
-            var dst = ParseArg(header, 4, dataReader, info.Item1, addresses, AddressingModes.Default | AddressingModes.Immediate, info.Item3, true, true);
+            var dst = ParseArg(header, 4, dataReader, info.Item1, addresses, AddressingModes.Default | AddressingModes.Immediate, info.Item3, true);
             var src = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.All, info.Item3);
 
             return KeyValuePair.Create($"MOVE.{info.Item2} {src},{dst}", addresses);

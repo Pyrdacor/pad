@@ -63,7 +63,7 @@ namespace pad.core.opcodes
         /// </summary>
         protected static string ParseArg(ushort header, int bitOffset, IDataReader dataReader,
             int immediateBytes, List<uint> absoluteLongAddresses, AddressingModes addressingModes,
-            string typeSuffix = "", bool reversed = false, bool immediateIsAddress = false)
+            string typeSuffix = "", bool reversed = false)
         {
             if (bitOffset < 0 || bitOffset > 16 - 6)
                 throw new ArgumentOutOfRangeException("Bit index was out of range.");
@@ -110,14 +110,6 @@ namespace pad.core.opcodes
                 return $"({displacement.ToSignedHexString()},{baseRegister},{index})";
             }
 
-            string FormatImmediateValue(string value)
-            {
-                if (immediateIsAddress)
-                    return $"${value}";
-                else
-                    return $"#${value}";
-            }
-
             int addressingMode = headBits;
 
             if (headBits == 7)
@@ -143,9 +135,9 @@ namespace pad.core.opcodes
                     3 => ReadAddressWithIndex(true), // Program counter with index
                     4 => immediateBytes switch
                     {
-                        1 => $"{FormatImmediateValue($"{dataReader.ReadByte():x2}")}",
-                        2 => $"{FormatImmediateValue($"{dataReader.ReadWord():x4}")}",
-                        4 => $"{FormatImmediateValue($"{dataReader.ReadDword():x8}")}",
+                        1 => $"#${dataReader.ReadByte():x2}",
+                        2 => $"#${dataReader.ReadWord():x4}",
+                        4 => $"#${dataReader.ReadDword():x8}",
                         _ => throw new InvalidDataException("Invalid argument data.")
                     },
                     _ => throw new InvalidDataException("Invalid argument data.")
