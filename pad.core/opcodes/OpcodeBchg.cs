@@ -20,7 +20,7 @@ namespace pad.core.opcodes
         {
             var addresses = new List<uint>();
             var reg = (header >> 9) & 0x7;
-            var arg = ParseArg(header, 10, dataReader, 4, addresses);
+            var arg = ParseArg(header, 10, dataReader, 4, addresses, AddressingModes.Default);
 
             return KeyValuePair.Create($"BCHG D{reg},{arg}", addresses);
         }

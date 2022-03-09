@@ -20,7 +20,7 @@ namespace pad.core.opcodes
         {
             var addresses = new List<uint>();
             var bitIndex = dataReader.ReadByte();
-            var arg = ParseArg(header, 10, dataReader, 0, addresses, false);
+            var arg = ParseArg(header, 10, dataReader, 0, addresses, AddressingModes.Default);
 
             return KeyValuePair.Create($"BTST #{bitIndex},{arg}", addresses);
         }

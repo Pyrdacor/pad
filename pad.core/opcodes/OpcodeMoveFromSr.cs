@@ -2,7 +2,26 @@
 
 namespace pad.core.opcodes
 {
-    internal class OpcodeMoveFromSr : IOpcode
+    /// <summary>
+    /// MOVE from SR - Copy data from status register to destination
+    /// 
+    /// MOVE SR,&lt;ea&gt;
+    /// Size: Word
+    /// </summary>
+    internal class OpcodeMoveFromSr : BaseOpcode
     {
+        public OpcodeMoveFromSr()
+            : base(0xffc0, 0x40c0, ToAsm)
+        {
+
+        }
+
+        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        {
+            var addresses = new List<uint>();
+            var arg = ParseArg(header, 10, dataReader, 2, addresses, AddressingModes.Default, "W");
+
+            return KeyValuePair.Create($"MOVE.W SR,{arg}", addresses);
+        }
     }
 }

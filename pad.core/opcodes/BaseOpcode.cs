@@ -62,8 +62,8 @@ namespace pad.core.opcodes
         /// If reversed is set, the register bits come first (only used by the MOVE opcode).
         /// </summary>
         protected static string ParseArg(ushort header, int bitOffset, IDataReader dataReader,
-            int immediateBytes, List<uint> absoluteLongAddresses, bool allowImmediate = true,
-            bool reversed = false)
+            int immediateBytes, List<uint> absoluteLongAddresses, AddressingModes addressingModes,
+            string typeSuffix = "", bool reversed = false, bool immediateIsAddress = false)
         {
             if (bitOffset < 0 || bitOffset > 16 - 6)
                 throw new ArgumentOutOfRangeException("Bit index was out of range.");
@@ -81,7 +81,7 @@ namespace pad.core.opcodes
                     absoluteLongAddresses.Add(dataReader.PeekDword());
             }
 
-            string AName() => regBits == 7 ? "SP" : $"A{regBits}";
+            string AName() => Global.AddressRegisterName(regBits);
 
             string ReadAddressWithIndex(bool pc)
             {
@@ -110,9 +110,25 @@ namespace pad.core.opcodes
                 return $"({displacement.ToSignedHexString()},{baseRegister},{index})";
             }
 
+            string FormatImmediateValue(string value)
+            {
+                if (immediateIsAddress)
+                    return $"${value}";
+                else
+                    return $"#${value}";
+            }
+
+            int addressingMode = headBits;
+
+            if (headBits == 7)
+                addressingMode += regBits;
+
+            if (!addressingModes.HasFlag((AddressingModes)addressingMode))
+                throw new InvalidDataException($"Addressing mode {(AddressingModes)addressingMode} is not supported by this opcode.");
+
             return headBits switch
             {
-                0 => $"D{regBits}", // Data register
+                0 => $"D{regBits}{typeSuffix}", // Data register
                 1 => $"{AName()}", // Address register
                 2 => $"({AName()})", // Address
                 3 => $"({AName()})+", // Address with postincrement
@@ -125,13 +141,13 @@ namespace pad.core.opcodes
                     1 => $"(${dataReader.ReadDword():x8}).l", // Absolute long address, TODO: Use label names?
                     2 => $"(${dataReader.ReadDisplacement()},PC)", // Program counter with displacement
                     3 => ReadAddressWithIndex(true), // Program counter with index
-                    4 => allowImmediate ? immediateBytes switch
+                    4 => immediateBytes switch
                     {
-                        1 => $"#{dataReader.ReadByte():x2}",
-                        2 => $"#{dataReader.ReadWord():x4}",
-                        4 => $"#{dataReader.ReadDword():x8}",
+                        1 => $"{FormatImmediateValue($"{dataReader.ReadByte():x2}")}",
+                        2 => $"{FormatImmediateValue($"{dataReader.ReadWord():x4}")}",
+                        4 => $"{FormatImmediateValue($"{dataReader.ReadDword():x8}")}",
                         _ => throw new InvalidDataException("Invalid argument data.")
-                    } : throw new InvalidDataException("Immediate values are not allowed for this opcode."),
+                    },
                     _ => throw new InvalidDataException("Invalid argument data.")
                 },
                 _ => throw new InvalidDataException("Invalid argument data.")

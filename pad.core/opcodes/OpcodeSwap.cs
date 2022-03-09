@@ -17,7 +17,7 @@ namespace pad.core.opcodes
 
         static string ToAsm(ushort header, IDataReader dataReader)
         {
-            return $"SWAP D{header & 0x3}";
+            return $"SWAP D{header & 0x7}";
         }
     }
 }

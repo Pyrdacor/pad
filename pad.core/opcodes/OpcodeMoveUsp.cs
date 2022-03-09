@@ -25,13 +25,13 @@ namespace pad.core.opcodes
 
         static string ToAsm(ushort header, IDataReader dataReader)
         {
-            int reg = header & 0x3;
+            int reg = header & 0x7;
             header &= 0xfff8;
 
             return header switch
             {
-                0x4e60 => $"MOVE A{reg},USP",
-                0x4e68 => $"MOVE USP,A{reg}",
+                0x4e60 => $"MOVE {Global.AddressRegisterName(reg)},USP",
+                0x4e68 => $"MOVE USP,{Global.AddressRegisterName(reg)}",
                 _ => throw new InvalidDataException("Invalid MOVE USP instruction.")
             };
         }

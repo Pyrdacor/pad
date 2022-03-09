@@ -25,7 +25,7 @@ namespace pad.core.opcodes
 
         static string ToAsm(ushort header, IDataReader dataReader)
         {
-            int reg = header & 0x3;
+            int reg = header & 0x7;
             header &= 0xfff8;
 
             return header switch

@@ -21,7 +21,7 @@ namespace pad.core.opcodes
         {
             var displacement = dataReader.ReadDisplacement();
 
-            return $"LINK A{header & 0x3},#{displacement}";
+            return $"LINK {Global.AddressRegisterName(header & 0x7)},#{displacement}";
         }
     }
 }

@@ -17,7 +17,7 @@ namespace pad.core.opcodes
 
         static string ToAsm(ushort header, IDataReader dataReader)
         {
-            return $"UNLK #{header & 0x4}";
+            return $"TRAP #{header & 0xf}";
         }
     }
 }

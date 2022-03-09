@@ -17,7 +17,7 @@ namespace pad.core.opcodes
 
         static string ToAsm(ushort header, IDataReader dataReader)
         {
-            return $"UNLK A{header & 0x3}";
+            return $"UNLK {Global.AddressRegisterName(header & 0x7)}";
         }
     }
 }
