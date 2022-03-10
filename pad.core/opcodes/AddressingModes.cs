@@ -16,6 +16,7 @@
         PCWithIndex = 0x0400,
         Immediate = 0x0800,
         Default = 0x01fd,
+        Memory = 0x01fc,
         All = 0xffff
     }
 }
