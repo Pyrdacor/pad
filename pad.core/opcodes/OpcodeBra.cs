@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     /// BRA &lt;label&gt;
     /// Size: Byte, Word
     /// </summary>
-    internal class OpcodeBra : BaseOpcode
+    internal class OpcodeBra : BaseBranchOpcode
     {
         public OpcodeBra()
             : base(0xff00, 0x6000, ToAsm)

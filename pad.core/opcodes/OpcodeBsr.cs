@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     /// BSR &lt;label&gt;
     /// Size: Byte, Word
     /// </summary>
-    internal class OpcodeBsr : BaseOpcode
+    internal class OpcodeBsr : BaseBranchOpcode
     {
         public OpcodeBsr()
             : base(0xff00, 0x6100, ToAsm)

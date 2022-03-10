@@ -39,7 +39,7 @@ namespace pad.core.opcodes
             this.asmProvider = asmProvider;
         }
 
-        public bool TryMatch(IDataReader reader, out string asm, out List<uint> absoluteLongAddresses)
+        public virtual bool TryMatch(IDataReader reader, out string asm, out List<uint> absoluteLongAddresses)
         {
             if (matcher(reader.PeekWord()))
             {

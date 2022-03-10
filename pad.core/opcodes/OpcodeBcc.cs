@@ -25,7 +25,7 @@ namespace pad.core.opcodes
     /// Bcc &lt;label&gt;
     /// Size: Byte, Word
     /// </summary>
-    internal class OpcodeBcc : BaseOpcode
+    internal class OpcodeBcc : BaseBranchOpcode
     {
         public OpcodeBcc()
             : base(IsMatch, ToAsm)

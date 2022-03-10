@@ -7,7 +7,7 @@ namespace pad.core.opcodes
     /// 
     /// JMP &lt;ea&gt;
     /// </summary>
-    internal class OpcodeJmp : BaseOpcode
+    internal class OpcodeJmp : BaseOpcode, IJumpOpcode
     {
         public OpcodeJmp()
             : base(0xffc0, 0x4ec0, ToAsm)

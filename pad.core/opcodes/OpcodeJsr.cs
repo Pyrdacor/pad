@@ -7,7 +7,7 @@ namespace pad.core.opcodes
     /// 
     /// JSR &lt;ea&gt;
     /// </summary>
-    internal class OpcodeJsr : BaseOpcode
+    internal class OpcodeJsr : BaseOpcode, IJumpOpcode
     {        
         public OpcodeJsr()
             : base(0xffc0, 0x4e80, ToAsm)
