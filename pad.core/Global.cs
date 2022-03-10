@@ -13,4 +13,11 @@ public static class Global
             _ => throw new IndexOutOfRangeException($"Invalid address register index {index}.")
         };
     }
+
+    public const string LabelPrefix = "LAB_";
+    public const string DataPrefix = "DAT_";
+    public const string LabelFormatString = "LAB_{0:x8}";
+    public const string DataFormatString = "DAT_{0:x8}";
+    public const string FirstPassLabelFormatString = "LAB_{0:x8}$";
+    public const string FirstPassDataFormatString = "DAT_{0:x8}$";
 }

@@ -28,7 +28,7 @@ namespace pad.core.opcodes
     internal class OpcodeBcc : BaseBranchOpcode
     {
         public OpcodeBcc()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, false)
         {
 
         }

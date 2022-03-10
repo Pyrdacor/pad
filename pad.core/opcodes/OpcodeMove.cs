@@ -27,9 +27,9 @@ namespace pad.core.opcodes
             return (header & 0x3000) != 0;
         }
 
-        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new List<uint>();
+            var addresses = new Dictionary<string, uint>();
             Tuple<int, string, string> info = (header >> 12) switch
             {
                 1 => Tuple.Create(1, "B", "B"),

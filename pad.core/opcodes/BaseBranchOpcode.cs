@@ -17,23 +17,24 @@ namespace pad.core.opcodes
             return d;
         }
 
-        protected BaseBranchOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider)
+        protected BaseBranchOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider, bool unconditional)
             : base(matcher, asmProvider)
         {
-
+            Unconditional = unconditional;
         }
 
-        protected BaseBranchOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider)
+        protected BaseBranchOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider, bool unconditional)
             : base(mask, value, asmProvider)
         {
-
+            Unconditional = unconditional;
         }
 
         public int Displacement { get; private set; }
+        public bool Unconditional { get; }
 
-        public override bool TryMatch(IDataReader reader, out string asm, out List<uint> absoluteLongAddresses)
+        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references)
         {
-            if (base.TryMatch(reader, out asm, out absoluteLongAddresses))
+            if (base.TryMatch(reader, out asm, out references))
             {
                 Displacement = GetDisplacement(reader.Size - reader.Position < 4 ? reader.PeekWord() : reader.PeekDword());
                 return true;

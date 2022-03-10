@@ -53,7 +53,7 @@ namespace pad.core.opcodes
             return result;
         }
 
-        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
             bool toRegister = ((header >> 10) & 0x1) != 0;
             var registerList = RegisterList(dataReader.ReadWord(), toRegister);
@@ -61,7 +61,7 @@ namespace pad.core.opcodes
             if (registerList.Length == 0)
                 throw new InvalidDataException("No register was given for MOVEM instruction.");
 
-            var addresses = new List<uint>();
+            var addresses = new Dictionary<string, uint>();
             AddressingModes addressingModes = toRegister
                 ? AddressingModes.All.Exclude(AddressingModes.DataRegister, AddressingModes.AddressRegister, AddressingModes.AddressWithPre, AddressingModes.Immediate)
                 : AddressingModes.All.Exclude(AddressingModes.DataRegister, AddressingModes.AddressRegister, AddressingModes.AddressWithPost, AddressingModes.Immediate,

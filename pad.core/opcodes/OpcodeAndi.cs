@@ -19,9 +19,9 @@ namespace pad.core.opcodes
             // other two and won't make any sense as you would AND two immediate values.
         }
 
-        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new List<uint>();
+            var addresses = new Dictionary<string, uint>();
             Tuple<int, string, string, string> info = ((header >> 6) & 0x3) switch
             {
                 0 => Tuple.Create(1, "B", "B", $"{dataReader.ReadByte():x2}"),

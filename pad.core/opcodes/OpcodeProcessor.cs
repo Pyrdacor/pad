@@ -2,7 +2,7 @@
 
 namespace pad.core.opcodes
 {
-    public class OpcodeConverter
+    public static class OpcodeProcessor
     {
         static readonly Dictionary<byte, IOpcode[]> OpcodesBy4BitHeader = new();
         static readonly Dictionary<byte, IOpcode> OpcodesBy8BitHeader = new();
@@ -11,7 +11,7 @@ namespace pad.core.opcodes
         static readonly Dictionary<ushort, IOpcode> OpcodesBy13BitHeader = new();
         static readonly Dictionary<ushort, ISimple16BitOpcode> OpcodesBy16BitHeader = new();
 
-        static OpcodeConverter()
+        static OpcodeProcessor()
         {
             // Plain 16 bit opcodes
             OpcodesBy16BitHeader.Add(0x003c, new OpcodeOriToCcr());
@@ -132,19 +132,19 @@ namespace pad.core.opcodes
             });
         }
 
-        public void Convert(IDataReader dataReader, Action<string> asmOutputHandler)
+        public static void Process(IDataReader dataReader, OpcodeHandlers handlers)
         {
             while (dataReader.Position < dataReader.Size)
             {
                 if (OpcodesBy16BitHeader.TryGetValue(dataReader.PeekWord(), out var opcode16Bit))
                 {
-                    asmOutputHandler(opcode16Bit.ConvertToAsm(dataReader));
+                    handlers.AsmOutputHandler(opcode16Bit.ConvertToAsm(dataReader));
                 }
                 else
                 {
                     void ProcessOpcode(IOpcode opcode)
                     {
-                        this.ProcessOpcode(opcode, dataReader, asmOutputHandler);
+                        OpcodeProcessor.ProcessOpcode(opcode, dataReader, handlers);
                     }
 
                     ushort code = dataReader.PeekWord();
@@ -185,22 +185,56 @@ namespace pad.core.opcodes
                     if (!OpcodesBy4BitHeader.TryGetValue(bMask, out var opcodes))
                         throw new InvalidDataException($"Invalid opcode {code:x4}");
 
-                    ProcessOpcode(ReadOpcode(opcodes, dataReader));
+                    OpcodeProcessor.ProcessOpcode(opcodes, dataReader, handlers);
                 }
             }
         }
 
-        IOpcode ReadOpcode(IEnumerable<IOpcode> possibleOpcodes, IDataReader dataReader)
+        static void ProcessOpcode(IOpcode opcode, IDataReader dataReader, OpcodeHandlers handlers)
         {
-
-        }
-
-        void ProcessOpcode(IOpcode opcode, IDataReader dataReader, Action<string> asmOutputHandler)
-        {
-            if (!opcode.TryMatch(dataReader, out string asm, out var absoluteLongAddresses))
+            if (!opcode.TryMatch(dataReader, out string asm, out var references))
                 throw new InvalidDataException("Invalid opcode data.");
 
-            asmOutputHandler(asm);
+            HandleOpcode((uint)dataReader.Position, opcode, asm, references, handlers);
+        }
+
+        static void ProcessOpcode(IEnumerable<IOpcode> possibleOpcodes, IDataReader dataReader, OpcodeHandlers handlers)
+        {
+            foreach (var opcode in possibleOpcodes)
+            {
+                if (opcode.TryMatch(dataReader, out string asm, out var references))
+                {
+                    HandleOpcode((uint)dataReader.Position, opcode, asm, references, handlers);
+                    return;
+                }
+            }
+
+            throw new InvalidDataException("Invalid opcode data.");
+        }
+
+        static void HandleOpcode(uint pc, IOpcode opcode, string asm, Dictionary<string, uint> references, OpcodeHandlers handlers)
+        {
+            handlers.AsmOutputHandler(asm);
+
+            if (references.Count != 0)
+                handlers.ReferenceHandler(references);
+
+            if (opcode is IBranchOpcode branch)
+            {
+                int offset = (int)pc - 2 + branch.Displacement;
+
+                if (offset < 0)
+                    throw new InvalidOperationException("Branch would target a negative offset.");
+
+                handlers.BranchHandler((uint)offset, branch.Unconditional);
+            }
+            else if (opcode is IJumpOpcode jump)
+            {
+                if (references.ContainsKey(jump.JumpTarget))
+                    handlers.JumpHandler(pc - 4, jump.JumpTarget);
+                else
+                    handlers.JumpHandler(pc, jump.JumpTarget);
+            }
         }
     }
 }

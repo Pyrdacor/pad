@@ -16,9 +16,9 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new List<uint>();
+            var addresses = new Dictionary<string, uint>();
             var reg = (header >> 9) & 0x7;
             Tuple<int, string, string> info = ((header >> 8) & 0x1) == 0
                 ? Tuple.Create(2, "W", "W")

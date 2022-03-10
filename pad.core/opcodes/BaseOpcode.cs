@@ -7,14 +7,14 @@ namespace pad.core.opcodes
     internal abstract class BaseOpcode : IOpcode
     {
         readonly Func<ushort, bool> matcher;
-        readonly Func<ushort, IDataReader, KeyValuePair<string, List<uint>>> asmProvider;
+        readonly Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider;
 
         protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider)
         {
             this.matcher = matcher;
             this.asmProvider = (header, reader) =>
             {
-                return KeyValuePair.Create(asmProvider(header, reader), new List<uint>());
+                return KeyValuePair.Create(asmProvider(header, reader), new Dictionary<string, uint>());
             };
         }
 
@@ -23,35 +23,36 @@ namespace pad.core.opcodes
             matcher = v => (v & mask) == value;
             this.asmProvider = (header, reader) =>
             {
-                return KeyValuePair.Create(asmProvider(header, reader), new List<uint>());
+                return KeyValuePair.Create(asmProvider(header, reader), new Dictionary<string, uint>());
             };
         }
 
-        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, List<uint>>> asmProvider)
+        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider)
         {
             this.matcher = matcher;
             this.asmProvider = asmProvider;
         }
 
-        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, List<uint>>> asmProvider)
+        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider)
         {
             matcher = v => (v & mask) == value;
             this.asmProvider = asmProvider;
         }
 
-        public virtual bool TryMatch(IDataReader reader, out string asm, out List<uint> absoluteLongAddresses)
+        public virtual bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references)
         {
             if (matcher(reader.PeekWord()))
             {
                 var result = asmProvider(reader.ReadWord(), reader);
+
                 asm = result.Key;
-                absoluteLongAddresses = result.Value;
+                references = result.Value;
 
                 return true;
             }
 
             asm = "";
-            absoluteLongAddresses = new();
+            references = new();
 
             return false;
         }
@@ -62,24 +63,16 @@ namespace pad.core.opcodes
         /// If reversed is set, the register bits come first (only used by the MOVE opcode).
         /// </summary>
         protected static string ParseArg(ushort header, int bitOffset, IDataReader dataReader,
-            int immediateBytes, List<uint> absoluteLongAddresses, AddressingModes addressingModes,
-            string typeSuffix = "", bool reversed = false)
+            int immediateBytes, Dictionary<string, uint> references, AddressingModes addressingModes,
+            string typeSuffix = "", bool reversed = false, bool jump = false)
         {
             if (bitOffset < 0 || bitOffset > 16 - 6)
-                throw new ArgumentOutOfRangeException("Bit index was out of range.");
+                throw new ArgumentOutOfRangeException(nameof(bitOffset), "Bit index was out of range.");
 
             var bits = header >> (16 - 6 - bitOffset);
 
             var headBits = reversed ? bits & 0x7 : bits >> 3;
             var regBits = reversed ? bits >> 3 : bits & 0x7;
-
-            if (headBits == 7)
-            {
-                if (regBits == 0) // Absolute short
-                    throw new NotSupportedException("Absolute short addresses are not supported.");
-                else if (regBits == 1) // Absolute long
-                    absoluteLongAddresses.Add(dataReader.PeekDword());
-            }
 
             string AName() => Global.AddressRegisterName(regBits);
 
@@ -118,6 +111,22 @@ namespace pad.core.opcodes
             if (!addressingModes.HasFlag((AddressingModes)addressingMode))
                 throw new InvalidDataException($"Addressing mode {(AddressingModes)addressingMode} is not supported by this opcode.");
 
+            string HandleAbsoluteLongReference()
+            {
+                uint address = dataReader.ReadDword();
+
+                if ((address & 0xff000000) != 0)
+                    throw new InvalidDataException("Absolute addresses must not exceed 24bit.");
+
+                string label = jump
+                    ? string.Format(Global.FirstPassLabelFormatString, address)
+                    : string.Format(Global.FirstPassDataFormatString, address);
+
+                references.Add(label, (uint)(dataReader.Position - 4));
+
+                return label + ".l";
+            }
+
             return headBits switch
             {
                 0 => $"D{regBits}{typeSuffix}", // Data register
@@ -130,7 +139,7 @@ namespace pad.core.opcodes
                 7 => regBits switch
                 {
                     0 => throw new NotSupportedException("Absolute short addresses are not supported."), // Absolute short address
-                    1 => $"(${dataReader.ReadDword():x8}).l", // Absolute long address, TODO: Use label names?
+                    1 => HandleAbsoluteLongReference(), // Absolute long address, TODO: Use label names?
                     2 => $"(${dataReader.ReadDisplacement()},PC)", // Program counter with displacement
                     3 => ReadAddressWithIndex(true), // Program counter with index
                     4 => immediateBytes switch

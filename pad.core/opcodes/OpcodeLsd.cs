@@ -30,10 +30,10 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
             string dir = (header & 0x0100) == 0 ? "R" : "L";
-            var addresses = new List<uint>();
+            var addresses = new Dictionary<string, uint>();
             var amount = (header >> 9) & 0x7;
             Tuple<string, string> info = ((header >> 6) & 0x3) switch
             {

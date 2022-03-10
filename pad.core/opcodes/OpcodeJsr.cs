@@ -7,7 +7,7 @@ namespace pad.core.opcodes
     /// 
     /// JSR &lt;ea&gt;
     /// </summary>
-    internal class OpcodeJsr : BaseOpcode, IJumpOpcode
+    internal class OpcodeJsr : BaseJumpOpcode
     {        
         public OpcodeJsr()
             : base(0xffc0, 0x4e80, ToAsm)
@@ -15,9 +15,9 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, List<uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new List<uint>();
+            var addresses = new Dictionary<string, uint>();
             var arg = ParseArg(header, 10, dataReader, 1, addresses,
                 AddressingModes.Address | AddressingModes.AddressWithDisplacement |
                 AddressingModes.AddressWithIndex | AddressingModes.AbsoluteShort |
