@@ -121,6 +121,10 @@ namespace pad.core.opcodes
             {
                 new OpcodeMulu(), new OpcodeMuls(), new OpcodeAbcd(), new OpcodeAnd()
             });
+            OpcodesBy4BitHeader.Add(0xd0, new IOpcode[]
+            {
+                new OpcodeAdd(), new OpcodeAddx(), new OpcodeAdda()
+            });
         }
 
         public void Convert(IDataReader dataReader, Action<string> asmOutputHandler)

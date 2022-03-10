@@ -31,6 +31,11 @@ namespace pad.core.opcodes
             if (tempHeader == 0xc100 || tempHeader == 0xc108) // would be ACBD
                 return false;
 
+            var opmode = (header >> 3) & 0x1f;
+
+            if (opmode == 0x08 || opmode == 0x09 || opmode == 0x11) // would be EXG
+                return false;
+
             return true;
         }
 

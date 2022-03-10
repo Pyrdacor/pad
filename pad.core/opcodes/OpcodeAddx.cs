@@ -3,15 +3,15 @@
 namespace pad.core.opcodes
 {
     /// <summary>
-    /// SUBX - Subtract extended
+    /// ADDX - Add extended
     /// 
-    /// SUBX Dy,Dx
-    /// SUBX -(Ay),-(Ax)
+    /// ADDX Dy,Dx
+    /// ADDX -(Ay),-(Ax)
     /// Size: Byte, Word, Long
     /// </summary>
-    internal class OpcodeSubx : BaseOpcode
+    internal class OpcodeAddx : BaseOpcode
     {
-        public OpcodeSubx()
+        public OpcodeAddx()
             : base(IsMatch, ToAsm)
         {
 
@@ -19,10 +19,10 @@ namespace pad.core.opcodes
 
         static bool IsMatch(ushort header)
         {
-            if ((header & 0xf130) != 0x9100)
+            if ((header & 0xf130) != 0xd100)
                 return false;
 
-            if ((header & 0x00c0) == 0x00c0) // would be SUBA
+            if ((header & 0x00c0) == 0x00c0) // would be ADDA
                 return false;
 
             return true;
@@ -41,9 +41,9 @@ namespace pad.core.opcodes
             };
 
             if ((header & 0x80) == 0) // Dx <- Dy
-                return $"SUBX.{info.Item1} D{src}{info.Item2},D{dst}{info.Item2}";
+                return $"ADDX.{info.Item1} D{src}{info.Item2},D{dst}{info.Item2}";
             else // -(Ax) <- -(Ay)
-                return $"SUBX.{info.Item1} -({Global.AddressRegisterName(src)}),-({Global.AddressRegisterName(dst)})";
+                return $"ADDX.{info.Item1} -({Global.AddressRegisterName(src)}),-({Global.AddressRegisterName(dst)})";
         }
     }
 }

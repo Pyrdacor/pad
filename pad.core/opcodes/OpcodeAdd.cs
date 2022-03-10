@@ -3,15 +3,15 @@
 namespace pad.core.opcodes
 {
     /// <summary>
-    /// SUB - Subtract binary
+    /// ADD - Add binary
     /// 
-    /// SUB &lt;ea&gt;,Dn
-    /// SUB Dn,&lt;ea&gt;
+    /// ADD &lt;ea&gt;,Dn
+    /// ADD Dn,&lt;ea&gt;
     /// Size: Byte, Word, Long
     /// </summary>
-    internal class OpcodeSub : BaseOpcode
+    internal class OpcodeAdd : BaseOpcode
     {
-        public OpcodeSub()
+        public OpcodeAdd()
             : base(IsMatch, ToAsm)
         {
 
@@ -19,13 +19,13 @@ namespace pad.core.opcodes
 
         static bool IsMatch(ushort header)
         {
-            if ((header >> 12) != 0x9)
+            if ((header >> 12) != 0xd)
                 return false;
 
-            if ((header & 0x00c0) == 0x00c0) // would be SUBA
+            if ((header & 0x00c0) == 0x00c0) // would be ADDA
                 return false;
 
-            if ((header & 0xf130) == 0x9100) // would be SUBX
+            if ((header & 0xf130) == 0xd100) // would be ADDX
                 return false;
 
             return true;
@@ -44,13 +44,13 @@ namespace pad.core.opcodes
                 0 => Tuple.Create(1, "B", "B"),
                 1 => Tuple.Create(2, "W", "W"),
                 2 => Tuple.Create(4, "L", ""),
-                _ => throw new InvalidDataException("Invalid SUB instruction.")
+                _ => throw new InvalidDataException("Invalid ADD instruction.")
             };
             var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, addressingModes, info.Item3);
 
             return toDataRegister
-                ? KeyValuePair.Create($"SUB.{info.Item2} {arg},D{reg}{info.Item3}", addresses)
-                : KeyValuePair.Create($"SUB.{info.Item2} D{reg}{info.Item3},{arg}", addresses);
+                ? KeyValuePair.Create($"ADD.{info.Item2} {arg},D{reg}{info.Item3}", addresses)
+                : KeyValuePair.Create($"ADD.{info.Item2} D{reg}{info.Item3},{arg}", addresses);
         }
     }
 }
