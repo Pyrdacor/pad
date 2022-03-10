@@ -71,8 +71,8 @@ namespace pad.core.opcodes
 
             var bits = header >> (16 - 6 - bitOffset);
 
-            var headBits = reversed ? bits & 0x7 : bits >> 3;
-            var regBits = reversed ? bits >> 3 : bits & 0x7;
+            var headBits = reversed ? bits & 0x7 : (bits >> 3) & 0x7;
+            var regBits = reversed ? (bits >> 3) & 0x7 : bits & 0x7;
 
             string AName() => Global.AddressRegisterName(regBits);
 
@@ -107,6 +107,8 @@ namespace pad.core.opcodes
 
             if (headBits == 7)
                 addressingMode += regBits;
+
+            addressingMode = (1 << addressingMode);
 
             if (!addressingModes.HasFlag((AddressingModes)addressingMode))
                 throw new InvalidDataException($"Addressing mode {(AddressingModes)addressingMode} is not supported by this opcode.");

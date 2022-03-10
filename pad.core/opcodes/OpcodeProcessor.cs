@@ -132,61 +132,58 @@ namespace pad.core.opcodes
             });
         }
 
-        public static void Process(IDataReader dataReader, OpcodeHandlers handlers)
+        public static void ProcessNextOpcode(IDataReader dataReader, OpcodeHandlers handlers)
         {
-            while (dataReader.Position < dataReader.Size)
+            if (OpcodesBy16BitHeader.TryGetValue(dataReader.PeekWord(), out var opcode16Bit))
             {
-                if (OpcodesBy16BitHeader.TryGetValue(dataReader.PeekWord(), out var opcode16Bit))
+                handlers.AsmOutputHandler(opcode16Bit.ConvertToAsm(dataReader));
+            }
+            else
+            {
+                void ProcessOpcode(IOpcode opcode)
                 {
-                    handlers.AsmOutputHandler(opcode16Bit.ConvertToAsm(dataReader));
+                    OpcodeProcessor.ProcessOpcode(opcode, dataReader, handlers);
                 }
-                else
+
+                ushort code = dataReader.PeekWord();
+                ushort mask = (ushort)(code & 0xfff8); // 13 bit mask
+
+                if (OpcodesBy13BitHeader.TryGetValue(mask, out var opcode))
                 {
-                    void ProcessOpcode(IOpcode opcode)
-                    {
-                        OpcodeProcessor.ProcessOpcode(opcode, dataReader, handlers);
-                    }
-
-                    ushort code = dataReader.PeekWord();
-                    ushort mask = (ushort)(code & 0xfff8); // 13 bit mask
-
-                    if (OpcodesBy13BitHeader.TryGetValue(mask, out var opcode))
-                    {
-                        ProcessOpcode(opcode);
-                        continue;
-                    }
-
-                    mask &= 0xfff0; // 12 bit mask
-
-                    if (OpcodesBy12BitHeader.TryGetValue(mask, out opcode))
-                    {
-                        ProcessOpcode(opcode);
-                        continue;
-                    }
-
-                    mask &= 0xffc0; // 10 bit mask
-
-                    if (OpcodesBy10BitHeader.TryGetValue(mask, out opcode))
-                    {
-                        ProcessOpcode(opcode);
-                        continue;
-                    }
-
-                    byte bMask = (byte)(mask >> 8); // 8 bit mask
-
-                    if (OpcodesBy8BitHeader.TryGetValue(bMask, out opcode))
-                    {
-                        ProcessOpcode(opcode);
-                        continue;
-                    }
-
-                    bMask &= 0xf0;
-
-                    if (!OpcodesBy4BitHeader.TryGetValue(bMask, out var opcodes))
-                        throw new InvalidDataException($"Invalid opcode {code:x4}");
-
-                    OpcodeProcessor.ProcessOpcode(opcodes, dataReader, handlers);
+                    ProcessOpcode(opcode);
+                    return;
                 }
+
+                mask &= 0xfff0; // 12 bit mask
+
+                if (OpcodesBy12BitHeader.TryGetValue(mask, out opcode))
+                {
+                    ProcessOpcode(opcode);
+                    return;
+                }
+
+                mask &= 0xffc0; // 10 bit mask
+
+                if (OpcodesBy10BitHeader.TryGetValue(mask, out opcode))
+                {
+                    ProcessOpcode(opcode);
+                    return;
+                }
+
+                byte bMask = (byte)(mask >> 8); // 8 bit mask
+
+                if (OpcodesBy8BitHeader.TryGetValue(bMask, out opcode))
+                {
+                    ProcessOpcode(opcode);
+                    return;
+                }
+
+                bMask &= 0xf0;
+
+                if (!OpcodesBy4BitHeader.TryGetValue(bMask, out var opcodes))
+                    throw new InvalidDataException($"Invalid opcode {code:x4}");
+
+                OpcodeProcessor.ProcessOpcode(opcodes, dataReader, handlers);
             }
         }
 
@@ -230,7 +227,7 @@ namespace pad.core.opcodes
             }
             else if (opcode is IJumpOpcode jump)
             {
-                if (references.ContainsKey(jump.JumpTarget))
+                if (references.ContainsKey(jump.JumpTarget.TrimEnd(new char[] { '.', 'l' })))
                     handlers.JumpHandler(pc - 4, jump.JumpTarget);
                 else
                     handlers.JumpHandler(pc, jump.JumpTarget);

@@ -11,7 +11,7 @@ namespace pad.core.opcodes
                 AddressingModes.Address | AddressingModes.AddressWithDisplacement |
                 AddressingModes.AddressWithIndex | AddressingModes.AbsoluteShort |
                 AddressingModes.AbsoluteLong | AddressingModes.PCWithDisplacement |
-                AddressingModes.PCWithIndex);
+                AddressingModes.PCWithIndex, "", false, true);
             return arg;
         }
 
@@ -31,16 +31,12 @@ namespace pad.core.opcodes
 
         public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references)
         {
-            if (base.TryMatch(reader, out asm, out references))
-            {
-                int position = reader.Position;
-                var header = reader.ReadWord();
-                JumpTarget = GetJumpTarget(header, reader);
-                reader.Position = position;
-                return true;
-            }
+            int position = reader.Position;
+            var header = reader.ReadWord();
+            JumpTarget = GetJumpTarget(header, reader);
+            reader.Position = position;
 
-            return false;
+            return base.TryMatch(reader, out asm, out references);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace pad.core.opcodes
                 AddressingModes.Address | AddressingModes.AddressWithDisplacement |
                 AddressingModes.AddressWithIndex | AddressingModes.AbsoluteShort |
                 AddressingModes.AbsoluteLong | AddressingModes.PCWithDisplacement |
-                AddressingModes.PCWithIndex);
+                AddressingModes.PCWithIndex, "", false, true);
 
             return KeyValuePair.Create($"JSR {arg}", addresses);
         }

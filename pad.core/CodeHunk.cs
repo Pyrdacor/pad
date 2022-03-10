@@ -52,7 +52,8 @@ namespace pad.core
         public void Process(List<uint> hunkOffsets, int offset = 0, string newline = "\n")
         {
             asm = "";
-            references.Clear();
+            foreach (var reference in references)
+                reference.Value.Clear();
             dataReader.Position = offset;
             HashSet<int> processedOffsets = new();
             HashSet<int> branchOffsets = new();
@@ -60,16 +61,32 @@ namespace pad.core
             Dictionary<string, string> currentAsmLabelReplacements = new();
             var handlers = new OpcodeHandlers(AsmOutputHandler, BranchHandler, JumpHandler, ReferenceHandler);            
 
+        Process:
             while (dataReader.Position < dataReader.Size)
             {
                 if (processedOffsets.Contains(dataReader.Position))
                     break; // all done
 
-                OpcodeProcessor.Process(dataReader, handlers);
+                OpcodeProcessor.ProcessNextOpcode(dataReader, handlers);
+
+                bool stop = currentAsm.StartsWith("RT") || currentAsm.StartsWith("TRAP") ||
+                    currentAsm.StartsWith("JMP") || currentAsm.StartsWith("JSR"); // TODO: remove these two later
 
                 asm += ReplaceLabels(currentAsm) + newline;
                 currentAsmLabelReplacements.Clear();
+
+                if (stop)
+                    break;
             }
+
+            if (branchOffsets.Count != 0)
+            {
+                dataReader.Position = branchOffsets.Last();
+                branchOffsets.Remove(dataReader.Position);
+                goto Process;
+            }
+
+            // TODO: Proceed with jumps
 
             string ReplaceLabels(string asm)
             {
@@ -99,6 +116,8 @@ namespace pad.core
                     if (!relocs.TryGetValue(jumpCallOffset, out int hunkIndex))
                         throw new InvalidDataException($"Missing reloc entry for jump instruction in hunk {Index} at offset ${jumpCallOffset-2:x8}.");
                 }
+
+                // TODO: set position to target (or stop processing hunk and memorize offset if jumped into another code hunk)
             }
 
             void ReferenceHandler(Dictionary<string, uint> references)
