@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeCmpm : BaseOpcode
     {
         public OpcodeCmpm()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, _ => 2)
         {
 
         }

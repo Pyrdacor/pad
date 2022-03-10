@@ -17,5 +17,7 @@ namespace pad.core.opcodes
 
             return $"ANDI #{arg:x4},SR";
         }
+
+        public int Size => 4;
     }
 }

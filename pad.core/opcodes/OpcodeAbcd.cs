@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeAbcd : BaseOpcode
     {
         public OpcodeAbcd()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, _ => 2)
         {
 
         }

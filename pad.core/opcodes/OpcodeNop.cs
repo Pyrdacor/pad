@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "NOP";
         }
+
+        public int Size => 2;
     }
 }

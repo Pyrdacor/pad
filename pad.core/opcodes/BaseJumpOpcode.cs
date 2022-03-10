@@ -15,28 +15,30 @@ namespace pad.core.opcodes
             return arg;
         }
 
-        protected BaseJumpOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider)
-            : base(matcher, asmProvider)
+        protected BaseJumpOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider,
+            Func<ushort, int> binarySizeProvider)
+            : base(matcher, asmProvider, binarySizeProvider)
         {
 
         }
 
-        protected BaseJumpOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider)
-            : base(mask, value, asmProvider)
+        protected BaseJumpOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider,
+            Func<ushort, int> binarySizeProvider)
+            : base(mask, value, asmProvider, binarySizeProvider)
         {
 
         }
 
         public string JumpTarget { get; private set; } = "";
 
-        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references)
+        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize)
         {
             int position = reader.Position;
             var header = reader.ReadWord();
             JumpTarget = GetJumpTarget(header, reader);
             reader.Position = position;
 
-            return base.TryMatch(reader, out asm, out references);
+            return base.TryMatch(reader, out asm, out references, out binarySize);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeMoveToSr : BaseOpcode
     {
         public OpcodeMoveToSr()
-            : base(0xffc0, 0x46c0, ToAsm)
+            : base(0xffc0, 0x46c0, ToAsm, header => SizeWithArg(header, 2))
         {
 
         }

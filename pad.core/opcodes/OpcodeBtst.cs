@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeBtst : BaseOpcode
     {
         public OpcodeBtst()
-            : base(0xf1c0, 0x0100, ToAsm)
+            : base(0xf1c0, 0x0100, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeNegX : BaseOpcode
     {
         public OpcodeNegX()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

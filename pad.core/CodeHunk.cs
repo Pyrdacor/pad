@@ -21,8 +21,12 @@ namespace pad.core
         // Key = Usage offset inside this code hunk, Value = Target hunk index
         readonly Dictionary<uint, int> relocs;
         readonly Dictionary<int, List<Reference>> references = new();
-        readonly Dictionary<int, string> labels = new();
+        // Key = Offset inside this code hunk, Value = Label name
+        readonly Dictionary<uint, string> labels = new();
+        // Jumps which use variables for the target address
         readonly List<UnresolvedJump> unresolvedJumps = new();
+        // Jumps to other code hunks
+        readonly Dictionary<int, List<UnresolvedJump>> externalJumps = new();
         string asm = "";
 
         public CodeHunk(int index, IDataReader dataReader, Dictionary<uint, List<uint>> relocs)
@@ -57,9 +61,11 @@ namespace pad.core
             dataReader.Position = offset;
             HashSet<int> processedOffsets = new();
             HashSet<int> branchOffsets = new();
+            HashSet<int> processedBranchOffsets = new();
             string currentAsm = "";
             Dictionary<string, string> currentAsmLabelReplacements = new();
-            var handlers = new OpcodeHandlers(AsmOutputHandler, BranchHandler, JumpHandler, ReferenceHandler);            
+            var handlers = new OpcodeHandlers(AsmOutputHandler, BranchHandler, JumpHandler, ReferenceHandler);
+            bool stop;
 
         Process:
             while (dataReader.Position < dataReader.Size)
@@ -67,10 +73,15 @@ namespace pad.core
                 if (processedOffsets.Contains(dataReader.Position))
                     break; // all done
 
+                // TODO: also mark additional words of that instruction as "processed"
+                // The total length is given in the opcode, just skip the first two bytes.
+                // The size is always a multiple of 2.
+
+                stop = false;
+
                 OpcodeProcessor.ProcessNextOpcode(dataReader, handlers);
 
-                bool stop = currentAsm.StartsWith("RT") || currentAsm.StartsWith("TRAP") ||
-                    currentAsm.StartsWith("JMP") || currentAsm.StartsWith("JSR"); // TODO: remove these two later
+                stop = stop || currentAsm.StartsWith("RT") || currentAsm.StartsWith("TRAP");
 
                 asm += ReplaceLabels(currentAsm) + newline;
                 currentAsmLabelReplacements.Clear();
@@ -83,10 +94,9 @@ namespace pad.core
             {
                 dataReader.Position = branchOffsets.Last();
                 branchOffsets.Remove(dataReader.Position);
+                processedBranchOffsets.Add(dataReader.Position);
                 goto Process;
             }
-
-            // TODO: Proceed with jumps
 
             string ReplaceLabels(string asm)
             {
@@ -103,10 +113,12 @@ namespace pad.core
 
             void BranchHandler(uint targetLocation, bool unconditional)
             {
+                int location = (int)targetLocation;
+
                 if (unconditional)
-                    dataReader.Position = (int)targetLocation;
-                else
-                    branchOffsets.Add((int)targetLocation);
+                    dataReader.Position = location;
+                else if (!processedBranchOffsets.Contains(location))
+                    branchOffsets.Add(location);
             }
 
             void JumpHandler(uint jumpCallOffset, string jumpTarget)
@@ -115,9 +127,26 @@ namespace pad.core
                 {
                     if (!relocs.TryGetValue(jumpCallOffset, out int hunkIndex))
                         throw new InvalidDataException($"Missing reloc entry for jump instruction in hunk {Index} at offset ${jumpCallOffset-2:x8}.");
-                }
 
-                // TODO: set position to target (or stop processing hunk and memorize offset if jumped into another code hunk)
+                    if (hunkIndex != Index)
+                    {
+                        if (!externalJumps.ContainsKey(hunkIndex))
+                            externalJumps[hunkIndex] = new() { new UnresolvedJump(jumpTarget, jumpCallOffset) };
+                        else
+                            externalJumps[hunkIndex].Add(new UnresolvedJump(jumpTarget, jumpCallOffset));
+
+                        stop = true;
+                    }
+                    else
+                    {
+                        dataReader.Position = int.Parse(jumpTarget[4..12], System.Globalization.NumberStyles.AllowHexSpecifier);
+                    }
+                }
+                else
+                {
+                    unresolvedJumps.Add(new UnresolvedJump(jumpTarget, jumpCallOffset));
+                    stop = true;
+                }
             }
 
             void ReferenceHandler(Dictionary<string, uint> references)
@@ -132,6 +161,8 @@ namespace pad.core
 
                     currentAsmLabelReplacements.Add(label, replacement);
                     this.references[hunkIndex].Add(new Reference(replacement, relativeOffset));
+                    if (hunkIndex == Index)
+                        labels.Add(relativeOffset, replacement);
                 }
 
                 static string GetReplacement(string label, uint hunkOffset, out uint relativeOffset)

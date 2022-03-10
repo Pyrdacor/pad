@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "RTR";
         }
+
+        public int Size => 2;
     }
 }

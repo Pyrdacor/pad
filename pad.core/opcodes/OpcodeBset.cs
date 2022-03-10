@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeBset : BaseOpcode
     {
         public OpcodeBset()
-            : base(0xf1c0, 0x01c0, ToAsm)
+            : base(0xf1c0, 0x01c0, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

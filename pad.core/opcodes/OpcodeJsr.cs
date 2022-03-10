@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     internal class OpcodeJsr : BaseJumpOpcode
     {        
         public OpcodeJsr()
-            : base(0xffc0, 0x4e80, ToAsm)
+            : base(0xffc0, 0x4e80, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

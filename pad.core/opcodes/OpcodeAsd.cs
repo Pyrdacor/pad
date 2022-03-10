@@ -14,7 +14,7 @@ namespace pad.core.opcodes
     internal class OpcodeAsd : BaseOpcode
     {
         public OpcodeAsd()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, _ => 2)
         {
 
         }
@@ -30,10 +30,9 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static string ToAsm(ushort header, IDataReader dataReader)
         {
             string dir = (header & 0x0100) == 0 ? "R" : "L";
-            var addresses = new Dictionary<string, uint>();
             var amount = (header >> 9) & 0x7;
             Tuple<string, string> info = ((header >> 6) & 0x3) switch
             {
@@ -47,7 +46,7 @@ namespace pad.core.opcodes
                 : $"D{amount}";
             var reg = header & 0x7;
 
-            return KeyValuePair.Create($"AS{dir}.{info.Item1} {amountStr},D{reg}{info.Item2}", addresses);
+            return $"AS{dir}.{info.Item1} {amountStr},D{reg}{info.Item2}";
         }
     }
 }

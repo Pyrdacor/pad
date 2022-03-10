@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeNbcd : BaseOpcode
     {
         public OpcodeNbcd()
-            : base(0xffc0, 0x4800, ToAsm)
+            : base(0xffc0, 0x4800, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

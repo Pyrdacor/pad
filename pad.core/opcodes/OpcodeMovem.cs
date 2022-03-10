@@ -13,11 +13,12 @@ namespace pad.core.opcodes
     internal class OpcodeMovem : BaseOpcode
     {
         public OpcodeMovem()
-            : base(0xfb80, 0x4880, ToAsm)
+            : base(0xfb80, 0x4880, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }
 
+        // TODO: This is bugged, and SP should be treated as A7 here!
         static string RegisterList(ushort mask, bool toRegister)
         {
             string result = "";
@@ -46,7 +47,7 @@ namespace pad.core.opcodes
                 }
                 else
                 {
-                    currentRegs.Add(i);
+                    currentRegs.Add(i % 8);
                 }
             }
 

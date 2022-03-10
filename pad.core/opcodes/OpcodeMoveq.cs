@@ -13,7 +13,7 @@ namespace pad.core.opcodes
     internal class OpcodeMoveq : BaseOpcode
     {
         public OpcodeMoveq()
-            : base(0xf100, 0x7000, ToAsm)
+            : base(0xf100, 0x7000, ToAsm, _ => 2)
         {
 
         }

@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeLsdm : BaseOpcode
     {
         public OpcodeLsdm()
-            : base(0xfec0, 0xe2c0, ToAsm)
+            : base(0xfec0, 0xe2c0, ToAsm, header => SizeWithArg(header, 2))
         {
 
         }

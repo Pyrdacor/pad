@@ -29,7 +29,7 @@ namespace pad.core.opcodes
     internal class OpcodeDbcc : BaseOpcode
     {
         public OpcodeDbcc()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, _ => 4)
         {
 
         }

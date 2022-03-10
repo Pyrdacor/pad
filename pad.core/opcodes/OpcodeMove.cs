@@ -11,9 +11,48 @@ namespace pad.core.opcodes
     internal class OpcodeMove : BaseOpcode
     {
         public OpcodeMove()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, Size)
         {
 
+        }
+
+        protected static int Size(ushort header)
+        {
+            int immediateBytes = (header >> 12) switch
+            {
+                1 => 2,
+                2 => 2,
+                3 => 4,
+                _ => throw new InvalidDataException("Invalid MOVE instruction data.")
+            };
+
+            var headBits1 = (header >> 6) & 0x7;
+            var regBits1 = (header >> 9) & 0x7;
+            var headBits2 = (header >> 3) & 0x7;
+            var regBits2 = header & 0x7;
+
+            int size = 2;
+
+            AddArgSize(headBits1, regBits1);
+            AddArgSize(headBits2, regBits2);
+
+            return size;
+
+            void AddArgSize(int headBits, int regBits)
+            {
+                if (headBits == 5 | headBits == 6)
+                    size += 2;
+                else if (headBits == 7)
+                    size += regBits switch
+                    {
+                        0 => 2,
+                        1 => 4,
+                        2 => 2,
+                        3 => 2,
+                        4 => immediateBytes,
+                        _ => throw new InvalidDataException("Invalid address mode.")
+                    };
+            }
         }
 
         static bool IsMatch(ushort header)
@@ -21,7 +60,7 @@ namespace pad.core.opcodes
             if ((header & 0xc000) != 0)
                 return false;
 
-            if ((header & 0x01c0) == 0x0100) // would be MOVEA
+            if ((header & 0x01c0) == 0x0400) // would be MOVEA
                 return false;
 
             return (header & 0x3000) != 0;

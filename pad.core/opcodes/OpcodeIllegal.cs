@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "ILLEGAL";
         }
+
+        public int Size => 2;
     }
 }

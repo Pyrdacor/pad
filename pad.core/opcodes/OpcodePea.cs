@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodePea : BaseOpcode
     {
         public OpcodePea()
-            : base(0xffc0, 0x4840, ToAsm)
+            : base(0xffc0, 0x4840, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

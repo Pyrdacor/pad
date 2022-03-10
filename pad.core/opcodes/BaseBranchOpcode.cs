@@ -3,6 +3,7 @@ using pad.core.util;
 
 namespace pad.core.opcodes
 {
+    // TODO: Replace offsets with label as well!
     internal class BaseBranchOpcode : BaseOpcode, IBranchOpcode
     {
         static int GetDisplacement(uint data)
@@ -17,14 +18,16 @@ namespace pad.core.opcodes
             return d;
         }
 
-        protected BaseBranchOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider, bool unconditional)
-            : base(matcher, asmProvider)
+        protected BaseBranchOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider, bool unconditional,
+            Func<ushort, int> binarySizeProvider)
+            : base(matcher, asmProvider, binarySizeProvider)
         {
             Unconditional = unconditional;
         }
 
-        protected BaseBranchOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider, bool unconditional)
-            : base(mask, value, asmProvider)
+        protected BaseBranchOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider, bool unconditional,
+            Func<ushort, int> binarySizeProvider)
+            : base(mask, value, asmProvider, binarySizeProvider)
         {
             Unconditional = unconditional;
         }
@@ -32,11 +35,12 @@ namespace pad.core.opcodes
         public int Displacement { get; private set; }
         public bool Unconditional { get; }
 
-        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references)
+        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize)
         {
-            if (base.TryMatch(reader, out asm, out references))
+            if (base.TryMatch(reader, out asm, out references, out binarySize))
             {
-                Displacement = GetDisplacement(reader.Size - reader.Position < 4 ? reader.PeekWord() : reader.PeekDword());
+                reader.Position -= binarySize;
+                Displacement = GetDisplacement(binarySize < 4 ? (uint)reader.ReadWord() << 16 : reader.ReadDword());
                 return true;
             }
 

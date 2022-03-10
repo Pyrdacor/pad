@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     internal class OpcodeSwap : BaseOpcode
     {
         public OpcodeSwap()
-            : base(0xfff8, 0x4840, ToAsm)
+            : base(0xfff8, 0x4840, ToAsm, _ => 2)
         {
 
         }

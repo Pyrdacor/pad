@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeBseti : BaseOpcode
     {
         public OpcodeBseti()
-            : base(0xffc0, 0x08c0, ToAsm)
+            : base(0xffc0, 0x08c0, ToAsm, header => 2 + SizeWithArg(header, 0))
         {
 
         }
@@ -19,7 +19,7 @@ namespace pad.core.opcodes
         static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
         {
             var addresses = new Dictionary<string, uint>();
-            var bitIndex = dataReader.ReadByte();
+            var bitIndex = dataReader.ReadWord() & 0xff;
             var arg = ParseArg(header, 10, dataReader, 0, addresses, AddressingModes.Default);
 
             return KeyValuePair.Create($"BSET.B #{bitIndex},{arg}", addresses);

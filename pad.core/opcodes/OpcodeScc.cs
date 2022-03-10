@@ -28,7 +28,7 @@ namespace pad.core.opcodes
     internal class OpcodeScc : BaseOpcode
     {
         public OpcodeScc()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, header => SizeWithArg(header, 2))
         {
 
         }

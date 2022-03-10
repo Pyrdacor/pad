@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeBclr : BaseOpcode
     {
         public OpcodeBclr()
-            : base(0xf1c0, 0x0180, ToAsm)
+            : base(0xf1c0, 0x0180, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

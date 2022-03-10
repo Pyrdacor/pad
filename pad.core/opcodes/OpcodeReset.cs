@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "RESET";
         }
+
+        public int Size => 2;
     }
 }

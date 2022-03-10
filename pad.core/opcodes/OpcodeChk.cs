@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeChk : BaseOpcode
     {
         public OpcodeChk()
-            : base(0xf1c0, 0x41a0, ToAsm)
+            : base(0xf1c0, 0x41a0, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

@@ -26,7 +26,7 @@ namespace pad.core.opcodes
     internal class OpcodeMovep : BaseOpcode
     {
         public OpcodeMovep()
-            : base(0xf138, 0x0108, ToAsm)
+            : base(0xf138, 0x0108, ToAsm, _ => 4)
         {
 
         }

@@ -13,7 +13,7 @@ namespace pad.core.opcodes
     internal class OpcodeBsr : BaseBranchOpcode
     {
         public OpcodeBsr()
-            : base(0xff00, 0x6100, ToAsm, true)
+            : base(0xff00, 0x6100, ToAsm, true, header => (header & 0x00ff) == 0 ? 4 : 2)
         {
 
         }

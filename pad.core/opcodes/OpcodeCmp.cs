@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeCmp : BaseOpcode
     {
         public OpcodeCmp()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, header => SizeWithArg(header, 2 * ((header >> 6) & 0x3)))
         {
 
         }

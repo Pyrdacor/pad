@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "RTS";
         }
+
+        public int Size => 2;
     }
 }

@@ -14,7 +14,7 @@ namespace pad.core.opcodes
     internal class OpcodeRoxd : BaseOpcode
     {
         public OpcodeRoxd()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, _ => 2)
         {
 
         }

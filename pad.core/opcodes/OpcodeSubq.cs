@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeSubq : BaseOpcode
     {
         public OpcodeSubq()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

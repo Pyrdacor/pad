@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeMoveUsp : BaseOpcode
     {
         public OpcodeMoveUsp()
-            : base(Match, ToAsm)
+            : base(Match, ToAsm, _ => 2)
         {
 
         }

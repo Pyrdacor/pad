@@ -13,9 +13,11 @@ namespace pad.core.opcodes
         public string ConvertToAsm(IDataReader reader)
         {
             reader.Position += 2;
-            var arg = reader.ReadByte();
+            var arg = reader.ReadWord() & 0xff;
 
             return $"ORI #{arg:x2},CCR";
         }
+
+        public int Size => 4;
     }
 }

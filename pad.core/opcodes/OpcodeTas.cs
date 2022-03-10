@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeTas : BaseOpcode
     {
         public OpcodeTas()
-            : base(0xffc0, 0x4ac0, ToAsm)
+            : base(0xffc0, 0x4ac0, ToAsm, header => SizeWithArg(header, 2))
         {
 
         }

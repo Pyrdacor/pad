@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeBchg : BaseOpcode
     {
         public OpcodeBchg()
-            : base(0xf1c0, 0x0140, ToAsm)
+            : base(0xf1c0, 0x0140, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

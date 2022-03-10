@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     internal class OpcodeTrap : BaseOpcode
     {
         public OpcodeTrap()
-            : base(0xfff0, 0x4e40, ToAsm)
+            : base(0xfff0, 0x4e40, ToAsm, _ => 2)
         {
 
         }

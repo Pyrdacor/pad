@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeExt : BaseOpcode
     {
         public OpcodeExt()
-            : base(Match, ToAsm)
+            : base(Match, ToAsm, _ => 2)
         {
 
         }

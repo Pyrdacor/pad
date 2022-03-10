@@ -17,5 +17,7 @@ namespace pad.core.opcodes
 
             return $"STOP #{arg:x4}";
         }
+
+        public int Size => 4;
     }
 }

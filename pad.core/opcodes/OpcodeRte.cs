@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "RTE";
         }
+
+        public int Size => 2;
     }
 }

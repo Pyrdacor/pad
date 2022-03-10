@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeMovea : BaseOpcode
     {
         public OpcodeMovea()
-            : base(0xe1c0, 0x2040, ToAsm)
+            : base(0xe1c0, 0x2040, ToAsm, header => SizeWithArg(header, (header & 0x1000) == 0 ? 4 : 2))
         {
 
         }

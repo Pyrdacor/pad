@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeMuls : BaseOpcode
     {
         public OpcodeMuls()
-            : base(0xf1c0, 0xc1c0, ToAsm)
+            : base(0xf1c0, 0xc1c0, ToAsm, header => SizeWithArg(header, 2))
         {
 
         }
@@ -23,7 +23,7 @@ namespace pad.core.opcodes
             var reg = (header >> 9) & 0x7;
             var arg = ParseArg(header, 10, dataReader, 2, addresses, AddressingModes.All.Exclude(AddressingModes.AddressRegister), "W");
 
-            return KeyValuePair.Create($"MULS {arg},D{reg}", addresses);
+            return KeyValuePair.Create($"MULS.W {arg},D{reg}", addresses);
         }
     }
 }

@@ -6,11 +6,13 @@ namespace pad.core.opcodes
 {
     internal abstract class BaseOpcode : IOpcode
     {
+        readonly Func<ushort, int> binarySizeProvider;
         readonly Func<ushort, bool> matcher;
         readonly Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider;
 
-        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider)
+        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider, Func<ushort, int> binarySizeProvider)
         {
+            this.binarySizeProvider = binarySizeProvider;
             this.matcher = matcher;
             this.asmProvider = (header, reader) =>
             {
@@ -18,8 +20,9 @@ namespace pad.core.opcodes
             };
         }
 
-        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider)
+        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider, Func<ushort, int> binarySizeProvider)
         {
+            this.binarySizeProvider = binarySizeProvider;
             matcher = v => (v & mask) == value;
             this.asmProvider = (header, reader) =>
             {
@@ -27,34 +30,69 @@ namespace pad.core.opcodes
             };
         }
 
-        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider)
+        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider,
+            Func<ushort, int> binarySizeProvider)
         {
+            this.binarySizeProvider = binarySizeProvider;
             this.matcher = matcher;
             this.asmProvider = asmProvider;
         }
 
-        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider)
+        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider,
+            Func<ushort, int> binarySizeProvider)
         {
+            this.binarySizeProvider = binarySizeProvider;
             matcher = v => (v & mask) == value;
             this.asmProvider = asmProvider;
         }
 
-        public virtual bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references)
+        public virtual bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize)
         {
             if (matcher(reader.PeekWord()))
             {
-                var result = asmProvider(reader.ReadWord(), reader);
+                ushort header = reader.ReadWord();
+                var result = asmProvider(header, reader);
 
                 asm = result.Key;
                 references = result.Value;
+                binarySize = binarySizeProvider(header);
 
                 return true;
             }
 
             asm = "";
             references = new();
+            binarySize = 0;
 
             return false;
+        }
+
+        protected static int SizeWithArg(ushort header, int immediateBytes, int bitOffset = 10)
+        {
+            if (bitOffset < 0 || bitOffset > 16 - 6)
+                throw new ArgumentOutOfRangeException(nameof(bitOffset), "Bit index was out of range.");
+
+            var bits = header >> (16 - 6 - bitOffset);
+
+            var headBits = (bits >> 3) & 0x7;
+
+            if (headBits == 5 | headBits == 6)
+                return 4;
+
+            if (headBits != 7)
+                return 2;
+
+            var regBits = bits & 0x7;
+
+            return regBits switch
+            {
+                0 => 4,
+                1 => 6,
+                2 => 4,
+                3 => 4,
+                4 => 2 + Math.Max(2, immediateBytes),
+                _ => throw new InvalidDataException("Invalid address mode.")
+            };
         }
 
         /// <summary>
@@ -146,7 +184,7 @@ namespace pad.core.opcodes
                     3 => ReadAddressWithIndex(true), // Program counter with index
                     4 => immediateBytes switch
                     {
-                        1 => $"#${dataReader.ReadByte():x2}",
+                        1 => $"#${dataReader.ReadWord() & 0xff:x2}",
                         2 => $"#${dataReader.ReadWord():x4}",
                         4 => $"#${dataReader.ReadDword():x8}",
                         _ => throw new InvalidDataException("Invalid argument data.")

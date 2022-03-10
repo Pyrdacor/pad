@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeLink : BaseOpcode
     {
         public OpcodeLink()
-            : base(0xfff8, 0x4e50, ToAsm)
+            : base(0xfff8, 0x4e50, ToAsm, _ => 4)
         {
 
         }

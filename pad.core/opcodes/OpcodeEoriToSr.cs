@@ -17,5 +17,7 @@ namespace pad.core.opcodes
 
             return $"EORI #{arg:x4},SR";
         }
+
+        public int Size => 4;
     }
 }

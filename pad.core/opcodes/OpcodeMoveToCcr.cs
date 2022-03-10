@@ -12,7 +12,7 @@ namespace pad.core.opcodes
     internal class OpcodeMoveToCcr : BaseOpcode
     {
         public OpcodeMoveToCcr()
-            : base(0xffc0, 0x44c0, ToAsm)
+            : base(0xffc0, 0x44c0, ToAsm, header => SizeWithArg(header, 2))
         {
 
         }

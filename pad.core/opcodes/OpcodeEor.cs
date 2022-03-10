@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeEor : BaseOpcode
     {
         public OpcodeEor()
-            : base(IsMatch, ToAsm)
+            : base(IsMatch, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

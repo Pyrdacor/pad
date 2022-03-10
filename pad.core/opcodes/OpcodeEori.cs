@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeEori : BaseOpcode
     {
         public OpcodeEori()
-            : base(0xff00, 0x0a00, ToAsm)
+            : base(0xff00, 0x0a00, ToAsm, header => Math.Max(2, 2 * ((header >> 6) & 0x3)) + SizeWithArg(header, 0))
         {
             // Note: We only match if the first byte is 10 here. This would normally
             // match EoriToCcr and EoriToSr as well but they are handled beforehand.
@@ -24,10 +24,10 @@ namespace pad.core.opcodes
             var addresses = new Dictionary<string, uint>();
             Tuple<int, string, string, string> info = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create(1, "B", "B", $"{dataReader.ReadByte():x2}"),
+                0 => Tuple.Create(1, "B", "B", $"{dataReader.ReadWord() & 0xff:x2}"),
                 1 => Tuple.Create(2, "W", "W", $"{dataReader.ReadWord():x4}"),
                 2 => Tuple.Create(4, "L", "", $"{dataReader.ReadDword():x8}"),
-                _ => throw new InvalidDataException("Invalid ORI instruction.")
+                _ => throw new InvalidDataException("Invalid EORI instruction.")
             };
             var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.Default, info.Item3);
 

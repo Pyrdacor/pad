@@ -28,7 +28,7 @@ namespace pad.core.opcodes
     internal class OpcodeBcc : BaseBranchOpcode
     {
         public OpcodeBcc()
-            : base(IsMatch, ToAsm, false)
+            : base(IsMatch, ToAsm, false, header => (header & 0x00ff) == 0 ? 4 : 2)
         {
 
         }

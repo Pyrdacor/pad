@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     internal class OpcodeUnlnk : BaseOpcode
     {
         public OpcodeUnlnk()
-            : base(0xfff8, 0x4e58, ToAsm)
+            : base(0xfff8, 0x4e58, ToAsm, _ => 2)
         {
 
         }

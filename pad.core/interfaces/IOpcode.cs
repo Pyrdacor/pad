@@ -2,7 +2,7 @@
 {
     public interface IOpcode
     {
-        bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references);
+        bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize);
     }
 
     public interface IBranchOpcode : IOpcode
@@ -19,5 +19,6 @@
     public interface ISimple16BitOpcode
     {
         string ConvertToAsm(IDataReader reader);
+        int Size { get; }
     }
 }

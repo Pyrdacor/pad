@@ -10,7 +10,7 @@ namespace pad.core.opcodes
     internal class OpcodeJmp : BaseJumpOpcode
     {
         public OpcodeJmp()
-            : base(0xffc0, 0x4ec0, ToAsm)
+            : base(0xffc0, 0x4ec0, ToAsm, header => SizeWithArg(header, 0))
         {
 
         }

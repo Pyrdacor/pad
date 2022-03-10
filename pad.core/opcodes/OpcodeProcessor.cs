@@ -189,19 +189,19 @@ namespace pad.core.opcodes
 
         static void ProcessOpcode(IOpcode opcode, IDataReader dataReader, OpcodeHandlers handlers)
         {
-            if (!opcode.TryMatch(dataReader, out string asm, out var references))
+            if (!opcode.TryMatch(dataReader, out string asm, out var references, out int binarySize))
                 throw new InvalidDataException("Invalid opcode data.");
 
-            HandleOpcode((uint)dataReader.Position, opcode, asm, references, handlers);
+            HandleOpcode((uint)dataReader.Position, opcode, asm, references, handlers, binarySize);
         }
 
         static void ProcessOpcode(IEnumerable<IOpcode> possibleOpcodes, IDataReader dataReader, OpcodeHandlers handlers)
         {
             foreach (var opcode in possibleOpcodes)
             {
-                if (opcode.TryMatch(dataReader, out string asm, out var references))
+                if (opcode.TryMatch(dataReader, out string asm, out var references, out int binarySize))
                 {
-                    HandleOpcode((uint)dataReader.Position, opcode, asm, references, handlers);
+                    HandleOpcode((uint)dataReader.Position, opcode, asm, references, handlers, binarySize);
                     return;
                 }
             }
@@ -209,7 +209,8 @@ namespace pad.core.opcodes
             throw new InvalidDataException("Invalid opcode data.");
         }
 
-        static void HandleOpcode(uint pc, IOpcode opcode, string asm, Dictionary<string, uint> references, OpcodeHandlers handlers)
+        static void HandleOpcode(uint pc, IOpcode opcode, string asm, Dictionary<string, uint> references,
+            OpcodeHandlers handlers, int binarySize)
         {
             handlers.AsmOutputHandler(asm);
 
@@ -218,7 +219,7 @@ namespace pad.core.opcodes
 
             if (opcode is IBranchOpcode branch)
             {
-                int offset = (int)pc - 2 + branch.Displacement;
+                int offset = (int)pc + branch.Displacement;
 
                 if (offset < 0)
                     throw new InvalidOperationException("Branch would target a negative offset.");

@@ -15,5 +15,7 @@ namespace pad.core.opcodes
 
             return "TRAPV";
         }
+
+        public int Size => 2;
     }
 }

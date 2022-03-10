@@ -11,7 +11,7 @@ namespace pad.core.opcodes
     internal class OpcodeAdda : BaseOpcode
     {
         public OpcodeAdda()
-            : base(0xf0c0, 0xd0c0, ToAsm)
+            : base(0xf0c0, 0xd0c0, ToAsm, header => SizeWithArg(header, 2 + 2 * ((header >> 8) & 0x1)))
         {
 
         }
