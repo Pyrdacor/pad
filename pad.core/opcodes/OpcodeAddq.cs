@@ -28,19 +28,18 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
-            Tuple<int, string, string> info = ((header >> 6) & 0x3) switch
+            var addresses = new Dictionary<string, Reference>();
+            Tuple<int, string> info = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create(1, "B", "B"),
-                1 => Tuple.Create(2, "W", "W"),
-                2 => Tuple.Create(4, "L", ""),
+                0 => Tuple.Create(1, "B"),
+                1 => Tuple.Create(2, "W"),
+                2 => Tuple.Create(4, "L"),
                 _ => throw new InvalidDataException("Invalid ADDQ instruction.")
             };
             var arg = ParseArg(header, 10, dataReader, info.Item1, addresses,
-                AddressingModes.All.Exclude(AddressingModes.PCWithDisplacement, AddressingModes.PCWithIndex, AddressingModes.Immediate),
-                info.Item3);
+                AddressingModes.All.Exclude(AddressingModes.PCWithDisplacement, AddressingModes.PCWithIndex, AddressingModes.Immediate));
             var value = 1 + ((header >> 9) & 0x07);
 
             return KeyValuePair.Create($"ADDQ.{info.Item2} #{value},{arg}", addresses);

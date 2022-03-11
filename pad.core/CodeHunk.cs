@@ -8,6 +8,9 @@ namespace pad.core
         public record Reference
         (
             string Label,
+            int SourceHunkIndex,
+            uint SourceOffset,            
+            int TargetHunkIndex,
             uint RelativeOffset
         );
 
@@ -27,7 +30,7 @@ namespace pad.core
         readonly List<UnresolvedJump> unresolvedJumps = new();
         // Jumps to other code hunks
         readonly Dictionary<int, List<UnresolvedJump>> externalJumps = new();
-        string asm = "";
+        readonly Dictionary<int, string> asm = new();
 
         public CodeHunk(int index, IDataReader dataReader, Dictionary<uint, List<uint>> relocs)
         {
@@ -49,13 +52,13 @@ namespace pad.core
         }
 
         public int Index { get; }
-        public string Asm => asm;
+        public string Asm(string newline = "\n") => string.Join(newline, asm);
         public IReadOnlyList<Reference>? this[int index] => references.TryGetValue(index, out var refs) ? refs : null;
         public IReadOnlyList<UnresolvedJump> UnresolvedJumps => unresolvedJumps;
 
-        public void Process(List<uint> hunkOffsets, int offset = 0, string newline = "\n")
+        public void Process(List<uint> hunkOffsets, int offset = 0)
         {
-            asm = "";
+            asm.Clear();
             foreach (var reference in references)
                 reference.Value.Clear();
             dataReader.Position = offset;
@@ -64,12 +67,15 @@ namespace pad.core
             HashSet<int> processedBranchOffsets = new();
             string currentAsm = "";
             Dictionary<string, string> currentAsmLabelReplacements = new();
-            var handlers = new OpcodeHandlers(AsmOutputHandler, BranchHandler, JumpHandler, ReferenceHandler);
-            bool stop;
+            int codeOffset = 0;
+            bool stop = false;
+            var handlers = new OpcodeHandlers(AsmOutputHandler, BranchHandler, JumpHandler, ReferenceHandler, OpcodeSizeHandler);           
 
         Process:
             while (dataReader.Position < dataReader.Size)
             {
+                codeOffset = dataReader.Position;
+
                 if (processedOffsets.Contains(dataReader.Position))
                     break; // all done
 
@@ -77,13 +83,14 @@ namespace pad.core
                 // The total length is given in the opcode, just skip the first two bytes.
                 // The size is always a multiple of 2.
 
+                processedOffsets.Add(codeOffset);
                 stop = false;
 
                 OpcodeProcessor.ProcessNextOpcode(dataReader, handlers);
 
                 stop = stop || currentAsm.StartsWith("RT") || currentAsm.StartsWith("TRAP");
 
-                asm += ReplaceLabels(currentAsm) + newline;
+                asm.Add(codeOffset, ReplaceLabels(currentAsm));
                 currentAsmLabelReplacements.Clear();
 
                 if (stop)
@@ -106,6 +113,17 @@ namespace pad.core
                 return asm;
             }
 
+            void OpcodeSizeHandler(int size)
+            {
+                if (size <= 2)
+                    return;
+
+                int numWords = (size - 2) / 2;
+
+                for (int i = 1; i <= numWords; ++i)
+                    processedOffsets.Add(codeOffset + i * 2);
+            }
+
             void AsmOutputHandler(string asm)
             {
                 currentAsm = asm;
@@ -121,7 +139,7 @@ namespace pad.core
                     branchOffsets.Add(location);
             }
 
-            void JumpHandler(uint jumpCallOffset, string jumpTarget)
+            void JumpHandler(uint jumpCallOffset, string jumpTarget, bool subRoutine)
             {
                 if (jumpTarget.StartsWith(Global.LabelPrefix))
                 {
@@ -135,39 +153,56 @@ namespace pad.core
                         else
                             externalJumps[hunkIndex].Add(new UnresolvedJump(jumpTarget, jumpCallOffset));
 
-                        stop = true;
+                        // A jump to a sub-routine will always return at some time or at least is expected to, so continue after the instruction in this case.
+                        // On the other hand a normal jump can not be expected to return, so just stop execution here.
+                        if (!subRoutine)
+                            stop = true;
                     }
                     else
                     {
+                        if (subRoutine) // Sub-routines will return, so the code after this instruction will be called as well. Mark it as a branch to process it later.
+                            branchOffsets.Add(dataReader.Position);
                         dataReader.Position = int.Parse(jumpTarget[4..12], System.Globalization.NumberStyles.AllowHexSpecifier);
                     }
                 }
                 else
                 {
                     unresolvedJumps.Add(new UnresolvedJump(jumpTarget, jumpCallOffset));
-                    stop = true;
+
+                    // A jump to a sub-routine will always return at some time or at least is expected to, so continue after the instruction in this case.
+                    // On the other hand a normal jump can not be expected to return, so just stop execution here.
+                    if (!subRoutine) 
+                        stop = true;
                 }
             }
 
-            void ReferenceHandler(Dictionary<string, uint> references)
+            void ReferenceHandler(Dictionary<string, opcodes.Reference> references)
             {
                 foreach (var reference in references)
                 {
-                    if (!relocs.TryGetValue(reference.Value, out int hunkIndex))
+                    if (!relocs.TryGetValue(reference.Value.UsageOffset, out int hunkIndex))
+                    {
+                        if (reference.Value.RelativeAddress == 0x00000004 || // special address
+                            reference.Value.RelativeAddress >= 0x00dff000 && reference.Value.RelativeAddress < 0x00e00000) // Amiga hardware registers
+                        {
+                            currentAsmLabelReplacements.Add(reference.Key, $"#${reference.Value.RelativeAddress:x8}");
+                            continue;
+                        }
+
                         throw new InvalidDataException($"Missing reloc entry for reference in hunk {Index} at offset ${reference.Value:x8}.");
+                    }
 
                     string label = reference.Key;
-                    string replacement = GetReplacement(label, hunkOffsets[hunkIndex], out var relativeOffset);
+                    string replacement = GetReplacement(label, hunkOffsets[hunkIndex], reference.Value.RelativeAddress);
 
                     currentAsmLabelReplacements.Add(label, replacement);
-                    this.references[hunkIndex].Add(new Reference(replacement, relativeOffset));
+                    this.references[hunkIndex].Add(new Reference(replacement, Index, reference.Value.UsageOffset, hunkIndex, reference.Value.RelativeAddress));
                     if (hunkIndex == Index)
-                        labels.Add(relativeOffset, replacement);
+                        labels.TryAdd(reference.Value.RelativeAddress, replacement);
                 }
 
-                static string GetReplacement(string label, uint hunkOffset, out uint relativeOffset)
+                static string GetReplacement(string label, uint hunkOffset, uint relativeOffset)
                 {
-                    relativeOffset = uint.Parse(label[4..12], System.Globalization.NumberStyles.AllowHexSpecifier);
                     return label[0..4] + $"{hunkOffset + relativeOffset:x8}";
                 }
             }

@@ -16,14 +16,14 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var reg = (header >> 9) & 0x7;
-            Tuple<int, string, string> info = ((header >> 8) & 0x1) == 0
-                ? Tuple.Create(2, "W", "W")
-                : Tuple.Create(4, "L", "");
-            var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.All, info.Item3);
+            Tuple<int, string> info = ((header >> 8) & 0x1) == 0
+                ? Tuple.Create(2, "W")
+                : Tuple.Create(4, "L");
+            var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.All);
 
             return KeyValuePair.Create($"ADDA.{info.Item2} {arg},{Global.AddressRegisterName(reg)}", addresses);
         }

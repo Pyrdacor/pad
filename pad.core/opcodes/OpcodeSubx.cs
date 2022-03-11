@@ -32,18 +32,18 @@ namespace pad.core.opcodes
         {
             var dst = (header >> 9) & 0x7;
             var src = header & 0x7;
-            Tuple<string, string> info = ((header >> 6) & 0x3) switch
+            string suffix = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create("B", "B"),
-                1 => Tuple.Create("W", "W"),
-                2 => Tuple.Create("L", ""),
+                0 => "B",
+                1 => "W",
+                2 => "L",
                 _ => throw new InvalidDataException("Invalid SUBX instruction.")
             };
 
             if ((header & 0x80) == 0) // Dx <- Dy
-                return $"SUBX.{info.Item1} D{src}{info.Item2},D{dst}{info.Item2}";
+                return $"SUBX.{suffix} D{src},D{dst}";
             else // -(Ax) <- -(Ay)
-                return $"SUBX.{info.Item1} -({Global.AddressRegisterName(src)}),-({Global.AddressRegisterName(dst)})";
+                return $"SUBX.{suffix} -({Global.AddressRegisterName(src)}),-({Global.AddressRegisterName(dst)})";
         }
     }
 }

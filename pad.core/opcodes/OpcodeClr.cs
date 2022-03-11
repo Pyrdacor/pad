@@ -19,7 +19,7 @@ namespace pad.core.opcodes
 
         static bool IsMatch(ushort header)
         {
-            if ((header & 0xff00) != 0x4000)
+            if ((header & 0xff00) != 0x4200)
                 return false;
 
             if ((header & 0x00c0) == 0x0030) // would be MOVE from SR
@@ -28,19 +28,19 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
-            Tuple<int, string, string> info = ((header >> 6) & 0x3) switch
+            var addresses = new Dictionary<string, Reference>();
+            string suffix = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create(1, "B", "B"),
-                1 => Tuple.Create(2, "W", "W"),
-                2 => Tuple.Create(4, "L", ""),
-                _ => throw new InvalidDataException("Invalid NEGX instruction.")
+                0 => "B",
+                1 => "W",
+                2 => "L",
+                _ => throw new InvalidDataException("Invalid CLR instruction.")
             };
-            var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.Default, info.Item3);
+            var arg = ParseArg(header, 10, dataReader, 0, addresses, AddressingModes.Default);
 
-            return KeyValuePair.Create($"CLR.{info.Item2} {arg}", addresses);
+            return KeyValuePair.Create($"CLR.{suffix} {arg}", addresses);
         }
     }
 }

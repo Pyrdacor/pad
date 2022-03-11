@@ -30,21 +30,21 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var reg = (header >> 9) & 0x7;
 
-            Tuple<int, string, string> info = ((header >> 6) & 0x3) switch
+            string suffix = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create(1, "B", "B"),
-                1 => Tuple.Create(2, "W", "W"),
-                2 => Tuple.Create(4, "L", ""),
+                0 => "B",
+                1 => "W",
+                2 => "L",
                 _ => throw new InvalidDataException("Invalid EOR instruction.")
             };
-            var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.Default, info.Item3);
+            var arg = ParseArg(header, 10, dataReader, 0, addresses, AddressingModes.Default);
 
-            return KeyValuePair.Create($"EOR.{info.Item2} D{reg}{info.Item3},{arg}", addresses);
+            return KeyValuePair.Create($"EOR.{suffix} D{reg},{arg}", addresses);
         }
     }
 }

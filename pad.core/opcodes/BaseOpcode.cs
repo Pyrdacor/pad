@@ -8,7 +8,7 @@ namespace pad.core.opcodes
     {
         readonly Func<ushort, int> binarySizeProvider;
         readonly Func<ushort, bool> matcher;
-        readonly Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider;
+        readonly Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, Reference>>> asmProvider;
 
         protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, string> asmProvider, Func<ushort, int> binarySizeProvider)
         {
@@ -16,7 +16,7 @@ namespace pad.core.opcodes
             this.matcher = matcher;
             this.asmProvider = (header, reader) =>
             {
-                return KeyValuePair.Create(asmProvider(header, reader), new Dictionary<string, uint>());
+                return KeyValuePair.Create(asmProvider(header, reader), new Dictionary<string, Reference>());
             };
         }
 
@@ -26,11 +26,11 @@ namespace pad.core.opcodes
             matcher = v => (v & mask) == value;
             this.asmProvider = (header, reader) =>
             {
-                return KeyValuePair.Create(asmProvider(header, reader), new Dictionary<string, uint>());
+                return KeyValuePair.Create(asmProvider(header, reader), new Dictionary<string, Reference>());
             };
         }
 
-        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider,
+        protected BaseOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, Reference>>> asmProvider,
             Func<ushort, int> binarySizeProvider)
         {
             this.binarySizeProvider = binarySizeProvider;
@@ -38,7 +38,7 @@ namespace pad.core.opcodes
             this.asmProvider = asmProvider;
         }
 
-        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, uint>>> asmProvider,
+        protected BaseOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, Reference>>> asmProvider,
             Func<ushort, int> binarySizeProvider)
         {
             this.binarySizeProvider = binarySizeProvider;
@@ -46,7 +46,7 @@ namespace pad.core.opcodes
             this.asmProvider = asmProvider;
         }
 
-        public virtual bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize)
+        public virtual bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, Reference> references, out int binarySize)
         {
             if (matcher(reader.PeekWord()))
             {
@@ -101,8 +101,8 @@ namespace pad.core.opcodes
         /// If reversed is set, the register bits come first (only used by the MOVE opcode).
         /// </summary>
         protected static string ParseArg(ushort header, int bitOffset, IDataReader dataReader,
-            int immediateBytes, Dictionary<string, uint> references, AddressingModes addressingModes,
-            string typeSuffix = "", bool reversed = false, bool jump = false)
+            int immediateBytes, Dictionary<string, Reference> references, AddressingModes addressingModes,
+            bool reversed = false, bool jump = false)
         {
             if (bitOffset < 0 || bitOffset > 16 - 6)
                 throw new ArgumentOutOfRangeException(nameof(bitOffset), "Bit index was out of range.");
@@ -162,14 +162,14 @@ namespace pad.core.opcodes
                     ? string.Format(Global.FirstPassLabelFormatString, address)
                     : string.Format(Global.FirstPassDataFormatString, address);
 
-                references.Add(label, (uint)(dataReader.Position - 4));
+                references.Add(label, new Reference((uint)(dataReader.Position - 4), address));
 
                 return label + ".l";
             }
 
             return headBits switch
             {
-                0 => $"D{regBits}{typeSuffix}", // Data register
+                0 => $"D{regBits}", // Data register
                 1 => $"{AName()}", // Address register
                 2 => $"({AName()})", // Address
                 3 => $"({AName()})+", // Address with postincrement

@@ -23,4 +23,4 @@ foreach (var hunk in hunks)
 
 codeHunk.Process(codeOffsets);
 
-File.WriteAllText(@"D:\Programmierung\C#\Projects\pad\test.asm", codeHunk.Asm);
+File.WriteAllText(@"D:\Programmierung\C#\Projects\pad\test.asm", codeHunk.Asm());

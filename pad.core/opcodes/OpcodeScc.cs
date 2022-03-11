@@ -44,10 +44,10 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
-            var arg = ParseArg(header, 10, dataReader, 1, addresses, AddressingModes.Default, "B");
+            var addresses = new Dictionary<string, Reference>();
+            var arg = ParseArg(header, 10, dataReader, 1, addresses, AddressingModes.Default);
             var condition = (Condition)((header >> 8) & 0xf);
 
             return KeyValuePair.Create($"S{condition} {arg}", addresses);

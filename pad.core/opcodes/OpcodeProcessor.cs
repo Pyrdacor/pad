@@ -136,6 +136,7 @@ namespace pad.core.opcodes
         {
             if (OpcodesBy16BitHeader.TryGetValue(dataReader.PeekWord(), out var opcode16Bit))
             {
+                handlers.OpcodeSizeHandler(opcode16Bit.Size);
                 handlers.AsmOutputHandler(opcode16Bit.ConvertToAsm(dataReader));
             }
             else
@@ -209,9 +210,10 @@ namespace pad.core.opcodes
             throw new InvalidDataException("Invalid opcode data.");
         }
 
-        static void HandleOpcode(uint pc, IOpcode opcode, string asm, Dictionary<string, uint> references,
+        static void HandleOpcode(uint pc, IOpcode opcode, string asm, Dictionary<string, Reference> references,
             OpcodeHandlers handlers, int binarySize)
         {
+            handlers.OpcodeSizeHandler(binarySize);
             handlers.AsmOutputHandler(asm);
 
             if (references.Count != 0)
@@ -219,7 +221,7 @@ namespace pad.core.opcodes
 
             if (opcode is IBranchOpcode branch)
             {
-                int offset = (int)pc + branch.Displacement;
+                int offset = (int)pc - binarySize + 2 + branch.Displacement;
 
                 if (offset < 0)
                     throw new InvalidOperationException("Branch would target a negative offset.");
@@ -229,9 +231,9 @@ namespace pad.core.opcodes
             else if (opcode is IJumpOpcode jump)
             {
                 if (references.ContainsKey(jump.JumpTarget.TrimEnd(new char[] { '.', 'l' })))
-                    handlers.JumpHandler(pc - 4, jump.JumpTarget);
+                    handlers.JumpHandler(pc - 4, jump.JumpTarget, jump.SubRoutine);
                 else
-                    handlers.JumpHandler(pc, jump.JumpTarget);
+                    handlers.JumpHandler(pc, jump.JumpTarget, jump.SubRoutine);
             }
         }
     }

@@ -66,18 +66,19 @@ namespace pad.core.opcodes
             return (header & 0x3000) != 0;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
-            Tuple<int, string, string> info = (header >> 12) switch
+            var addresses = new Dictionary<string, Reference>();
+            Tuple<int, string> info = (header >> 12) switch
             {
-                1 => Tuple.Create(1, "B", "B"),
-                2 => Tuple.Create(4, "L", ""),
-                3 => Tuple.Create(2, "W", "W"),
+                1 => Tuple.Create(1, "B"),
+                2 => Tuple.Create(4, "L"),
+                3 => Tuple.Create(2, "W"),
                 _ => throw new InvalidDataException("Invalid MOVE instruction data.")
             };
-            var dst = ParseArg(header, 4, dataReader, info.Item1, addresses, AddressingModes.Default | AddressingModes.Immediate, info.Item3, true);
-            var src = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.All, info.Item3);
+            // NOTE: Parse source first, as additional parameters are read in the order <Source>, <Destination>!
+            var src = ParseArg(header, 10, dataReader, info.Item1, addresses, AddressingModes.All);
+            var dst = ParseArg(header, 4, dataReader, info.Item1, addresses, AddressingModes.Default | AddressingModes.Immediate, true);            
 
             return KeyValuePair.Create($"MOVE.{info.Item2} {src},{dst}", addresses);
         }

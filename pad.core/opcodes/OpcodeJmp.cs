@@ -15,14 +15,16 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        public override bool SubRoutine => false;
+
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var arg = ParseArg(header, 10, dataReader, 1, addresses,
                 AddressingModes.Address | AddressingModes.AddressWithDisplacement |
                 AddressingModes.AddressWithIndex | AddressingModes.AbsoluteShort |
                 AddressingModes.AbsoluteLong | AddressingModes.PCWithDisplacement |
-                AddressingModes.PCWithIndex, "", false, true);
+                AddressingModes.PCWithIndex, false, true);
 
             return KeyValuePair.Create($"JMP {arg}", addresses);
         }

@@ -34,26 +34,26 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var reg = (header >> 9) & 0x7;
             bool toDataRegister = (header & 0x0100) == 0;
             var addressingModes = toDataRegister
                 ? AddressingModes.All.Exclude(AddressingModes.AddressRegister)
                 : AddressingModes.Default;
-            Tuple<int, string, string> info = ((header >> 6) & 0x3) switch
+            Tuple<int, string> info = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create(1, "B", "B"),
-                1 => Tuple.Create(2, "W", "W"),
-                2 => Tuple.Create(4, "L", ""),
+                0 => Tuple.Create(1, "B"),
+                1 => Tuple.Create(2, "W"),
+                2 => Tuple.Create(4, "L"),
                 _ => throw new InvalidDataException("Invalid OR instruction.")
             };
-            var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, addressingModes, info.Item3);
+            var arg = ParseArg(header, 10, dataReader, info.Item1, addresses, addressingModes);
 
             return toDataRegister
-                ? KeyValuePair.Create($"OR.{info.Item2} {arg},D{reg}{info.Item3}", addresses)
-                : KeyValuePair.Create($"OR.{info.Item2} D{reg}{info.Item3},{arg}", addresses);
+                ? KeyValuePair.Create($"OR.{info.Item2} {arg},D{reg}", addresses)
+                : KeyValuePair.Create($"OR.{info.Item2} D{reg},{arg}", addresses);
         }
     }
 }

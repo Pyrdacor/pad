@@ -15,7 +15,7 @@ namespace pad.core.opcodes
             reader.Position += 2;
             var arg = reader.ReadWord() & 0xff;
 
-            return $"ORI #{arg:x2},CCR";
+            return $"ORI #${arg:x2},CCR";
         }
 
         public int Size => 4;

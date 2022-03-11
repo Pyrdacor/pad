@@ -17,11 +17,11 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
             string dir = (header & 0x0100) == 0 ? "R" : "L";
-            var addresses = new Dictionary<string, uint>();
-            var arg = ParseArg(header, 10, dataReader, 2, addresses, AddressingModes.Memory, "W");
+            var addresses = new Dictionary<string, Reference>();
+            var arg = ParseArg(header, 10, dataReader, 2, addresses, AddressingModes.Memory);
 
             return KeyValuePair.Create($"RO{dir}.W {arg}", addresses);
         }

@@ -15,7 +15,7 @@ namespace pad.core.opcodes
             reader.Position += 2;
             var arg = reader.ReadWord();
 
-            return $"ANDI #{arg:x4},SR";
+            return $"ANDI #${arg:x4},SR";
         }
 
         public int Size => 4;

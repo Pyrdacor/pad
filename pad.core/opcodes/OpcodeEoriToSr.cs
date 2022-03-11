@@ -15,7 +15,7 @@ namespace pad.core.opcodes
             reader.Position += 2;
             var arg = reader.ReadWord();
 
-            return $"EORI #{arg:x4},SR";
+            return $"EORI #${arg:x4},SR";
         }
 
         public int Size => 4;

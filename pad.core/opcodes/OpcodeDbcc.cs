@@ -42,14 +42,14 @@ namespace pad.core.opcodes
             return ((header >> 3) & 0x7) == 0x1; // otherwise would be Scc
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var reg = header & 0x7;
             var condition = (Condition)((header >> 8) & 0xf);
             var displacement = dataReader.ReadDisplacement();
 
-            return KeyValuePair.Create($"DB{condition} D{reg}W,#{displacement}", addresses);
+            return KeyValuePair.Create($"DB{condition} D{reg},#{displacement}", addresses);
         }
     }
 }

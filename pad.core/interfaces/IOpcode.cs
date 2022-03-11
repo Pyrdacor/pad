@@ -1,8 +1,10 @@
-﻿namespace pad.core.interfaces
+﻿using pad.core.opcodes;
+
+namespace pad.core.interfaces
 {
     public interface IOpcode
     {
-        bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize);
+        bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, Reference> references, out int binarySize);
     }
 
     public interface IBranchOpcode : IOpcode
@@ -14,6 +16,7 @@
     public interface IJumpOpcode : IOpcode
     {
         string JumpTarget { get; }
+        bool SubRoutine { get; }
     }
 
     public interface ISimple16BitOpcode

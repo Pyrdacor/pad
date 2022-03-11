@@ -4,7 +4,7 @@ using pad.core.util;
 namespace pad.core.opcodes
 {
     // TODO: Replace offsets with label as well!
-    internal class BaseBranchOpcode : BaseOpcode, IBranchOpcode
+    internal abstract class BaseBranchOpcode : BaseOpcode, IBranchOpcode
     {
         static int GetDisplacement(uint data)
         {
@@ -35,7 +35,7 @@ namespace pad.core.opcodes
         public int Displacement { get; private set; }
         public bool Unconditional { get; }
 
-        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, uint> references, out int binarySize)
+        public override bool TryMatch(IDataReader reader, out string asm, out Dictionary<string, Reference> references, out int binarySize)
         {
             if (base.TryMatch(reader, out asm, out references, out binarySize))
             {

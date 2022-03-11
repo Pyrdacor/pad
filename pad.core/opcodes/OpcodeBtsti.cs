@@ -16,9 +16,9 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var bitIndex = dataReader.ReadWord() & 0xff;
             var arg = ParseArg(header, 10, dataReader, 0, addresses, AddressingModes.Default);
 

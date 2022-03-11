@@ -30,16 +30,16 @@ namespace pad.core.opcodes
             return true;
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
             string dir = (header & 0x0100) == 0 ? "R" : "L";
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var amount = (header >> 9) & 0x7;
-            Tuple<string, string> info = ((header >> 6) & 0x3) switch
+            string suffix = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create("B", "B"),
-                1 => Tuple.Create("W", "W"),
-                2 => Tuple.Create("L", ""),
+                0 => "B",
+                1 => "W",
+                2 => "L",
                 _ => throw new InvalidDataException("Invalid LSd instruction.")
             };
             string amountStr = (header & 0x20) == 0
@@ -47,7 +47,7 @@ namespace pad.core.opcodes
                 : $"D{amount}";
             var reg = header & 0x7;
 
-            return KeyValuePair.Create($"LS{dir}.{info.Item1} {amountStr},D{reg}{info.Item2}", addresses);
+            return KeyValuePair.Create($"LS{dir}.{suffix} {amountStr},D{reg}", addresses);
         }
     }
 }

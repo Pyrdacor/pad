@@ -34,11 +34,11 @@ namespace pad.core.opcodes
         {
             string dir = (header & 0x0100) == 0 ? "R" : "L";
             var amount = (header >> 9) & 0x7;
-            Tuple<string, string> info = ((header >> 6) & 0x3) switch
+            string suffix = ((header >> 6) & 0x3) switch
             {
-                0 => Tuple.Create("B", "B"),
-                1 => Tuple.Create("W", "W"),
-                2 => Tuple.Create("L", ""),
+                0 => "B",
+                1 => "W",
+                2 => "L",
                 _ => throw new InvalidDataException("Invalid ASd instruction.")
             };
             string amountStr = (header & 0x20) == 0
@@ -46,7 +46,7 @@ namespace pad.core.opcodes
                 : $"D{amount}";
             var reg = header & 0x7;
 
-            return $"AS{dir}.{info.Item1} {amountStr},D{reg}{info.Item2}";
+            return $"AS{dir}.{suffix} {amountStr},D{reg}";
         }
     }
 }

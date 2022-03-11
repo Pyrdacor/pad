@@ -17,9 +17,9 @@ namespace pad.core.opcodes
 
         }
 
-        static KeyValuePair<string, Dictionary<string, uint>> ToAsm(ushort header, IDataReader dataReader)
+        static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
-            var addresses = new Dictionary<string, uint>();
+            var addresses = new Dictionary<string, Reference>();
             var reg = Global.AddressRegisterName((header >> 9) & 0x7);
             var addressingModes = AddressingModes.All.Exclude(AddressingModes.DataRegister, AddressingModes.AddressRegister,
                 AddressingModes.AddressWithPost, AddressingModes.AddressWithPre, AddressingModes.Immediate);
