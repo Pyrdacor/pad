@@ -119,7 +119,7 @@ namespace pad.core.opcodes
             });
             OpcodesBy4BitHeader.Add(0xc0, new IOpcode[]
             {
-                new OpcodeMulu(), new OpcodeMuls(), new OpcodeAbcd(), new OpcodeAnd()
+                new OpcodeMulu(), new OpcodeMuls(), new OpcodeAbcd(), new OpcodeExg(), new OpcodeAnd()
             });
             OpcodesBy4BitHeader.Add(0xd0, new IOpcode[]
             {
