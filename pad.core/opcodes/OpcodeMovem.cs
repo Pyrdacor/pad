@@ -13,12 +13,11 @@ namespace pad.core.opcodes
     internal class OpcodeMovem : BaseOpcode
     {
         public OpcodeMovem()
-            : base(0xfb80, 0x4880, ToAsm, header => SizeWithArg(header, 0))
+            : base(0xfb80, 0x4880, ToAsm, header => 2 + SizeWithArg(header, 0))
         {
 
         }
 
-        // TODO: This is bugged
         static string RegisterList(ushort mask, bool toRegister)
         {
             string result = "";

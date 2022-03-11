@@ -1,6 +1,4 @@
-﻿using pad.core.extensions;
-using pad.core.interfaces;
-using pad.core.util;
+﻿using pad.core.interfaces;
 
 namespace pad.core.opcodes
 {
@@ -46,19 +44,14 @@ namespace pad.core.opcodes
             string suffix = "B";
             ushort d = (ushort)(header & 0x00ff);
             var condition = (Condition)((header >> 8) & 0xf);
-            string displacement;
 
             if (d == 0)
             {
                 suffix = "W";
-                displacement = dataReader.ReadDisplacement();
-            }
-            else
-            {
-                displacement = ByteConverter.AsSigned((byte)d).ToSignedHexString();
+                dataReader.Position += 2;
             }
 
-            return $"B{condition}.{suffix} #{displacement}";
+            return $"B{condition}.{suffix} <LABEL>";
         }
     }
 }

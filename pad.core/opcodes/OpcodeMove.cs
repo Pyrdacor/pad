@@ -21,8 +21,8 @@ namespace pad.core.opcodes
             int immediateBytes = (header >> 12) switch
             {
                 1 => 2,
-                2 => 2,
-                3 => 4,
+                2 => 4,
+                3 => 2,
                 _ => throw new InvalidDataException("Invalid MOVE instruction data.")
             };
 

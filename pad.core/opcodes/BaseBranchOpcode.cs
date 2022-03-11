@@ -6,7 +6,7 @@ namespace pad.core.opcodes
     // TODO: Replace offsets with label as well!
     internal abstract class BaseBranchOpcode : BaseOpcode, IBranchOpcode
     {
-        static int GetDisplacement(uint data)
+        protected virtual int GetDisplacement(uint data)
         {
             int d = (int)(data >> 16) & 0xff;
 
@@ -26,6 +26,20 @@ namespace pad.core.opcodes
         }
 
         protected BaseBranchOpcode(ushort mask, ushort value, Func<ushort, IDataReader, string> asmProvider, bool unconditional,
+            Func<ushort, int> binarySizeProvider)
+            : base(mask, value, asmProvider, binarySizeProvider)
+        {
+            Unconditional = unconditional;
+        }
+
+        protected BaseBranchOpcode(Func<ushort, bool> matcher, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, Reference>>> asmProvider, bool unconditional,
+            Func<ushort, int> binarySizeProvider)
+            : base(matcher, asmProvider, binarySizeProvider)
+        {
+            Unconditional = unconditional;
+        }
+
+        protected BaseBranchOpcode(ushort mask, ushort value, Func<ushort, IDataReader, KeyValuePair<string, Dictionary<string, Reference>>> asmProvider, bool unconditional,
             Func<ushort, int> binarySizeProvider)
             : base(mask, value, asmProvider, binarySizeProvider)
         {

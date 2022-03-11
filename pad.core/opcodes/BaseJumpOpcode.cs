@@ -39,7 +39,22 @@ namespace pad.core.opcodes
             JumpTarget = GetJumpTarget(header, reader);
             reader.Position = position;
 
-            return base.TryMatch(reader, out asm, out references, out binarySize);
+            bool match = base.TryMatch(reader, out asm, out references, out binarySize);
+
+            if (SubRoutine && match && references.Count != 0)
+            {
+                JumpTarget = JumpTarget.Replace(Global.LabelPrefix, Global.FunctionPrefix);
+                asm = asm.Replace(Global.LabelPrefix, Global.FunctionPrefix);
+
+                Dictionary<string, Reference> functionReferences = new(references.Count);
+
+                foreach (var reference in references)
+                    functionReferences.Add(reference.Key.Replace(Global.LabelPrefix, Global.FunctionPrefix), reference.Value);
+
+                references = functionReferences;
+            }
+
+            return match;
         }
     }
 }

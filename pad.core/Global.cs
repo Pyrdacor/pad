@@ -14,6 +14,7 @@ public static class Global
         };
     }
 
+    public const string FunctionPrefix = "FUN_";
     public const string LabelPrefix = "LAB_";
     public const string DataPrefix = "DAT_";
     public const string LabelFormatString = "LAB_{0:x8}";

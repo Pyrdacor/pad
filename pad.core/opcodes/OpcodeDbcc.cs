@@ -1,5 +1,6 @@
 ﻿using pad.core.extensions;
 using pad.core.interfaces;
+using pad.core.util;
 
 namespace pad.core.opcodes
 {
@@ -26,10 +27,10 @@ namespace pad.core.opcodes
     /// DBcc Dn,&lt;label&gt;
     /// Size: Word
     /// </summary>
-    internal class OpcodeDbcc : BaseOpcode
+    internal class OpcodeDbcc : BaseBranchOpcode
     {
         public OpcodeDbcc()
-            : base(IsMatch, ToAsm, _ => 4)
+            : base(IsMatch, ToAsm, false, _ => 4)
         {
 
         }
@@ -42,6 +43,11 @@ namespace pad.core.opcodes
             return ((header >> 3) & 0x7) == 0x1; // otherwise would be Scc
         }
 
+        protected override int GetDisplacement(uint data)
+        {
+            return WordConverter.AsSigned((ushort)(data & 0xffff));
+        }
+
         static KeyValuePair<string, Dictionary<string, Reference>> ToAsm(ushort header, IDataReader dataReader)
         {
             var addresses = new Dictionary<string, Reference>();
@@ -49,7 +55,7 @@ namespace pad.core.opcodes
             var condition = (Condition)((header >> 8) & 0xf);
             var displacement = dataReader.ReadDisplacement();
 
-            return KeyValuePair.Create($"DB{condition} D{reg},#{displacement}", addresses);
+            return KeyValuePair.Create($"DB{condition} D{reg},<LABEL>", addresses);
         }
     }
 }
