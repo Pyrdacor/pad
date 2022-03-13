@@ -74,9 +74,10 @@ namespace pad.core
             }
 
             // Fill in data
+            int wordIndex = 1;
+            int stringIndex = 1;
             List<byte> currentData = new();
             int dataOffset = 0;
-            // TODO: chars in range 0x20 to 0x7e may be treated as character strings (they must end with 0x00)
             for (int i = 0; i < dataReader.Size / 2; ++i)
             {
                 int offset = i * 2;
@@ -85,6 +86,12 @@ namespace pad.core
                 {
                     if (currentData.Count == 0)
                         dataOffset = offset;
+                    else if (labels.ContainsKey((uint)offset))
+                    {
+                        OutputData();
+                        currentData.Clear();
+                        dataOffset = offset;
+                    }
                     dataReader.Position = offset;
                     currentData.Add(dataReader.ReadByte());
                     currentData.Add(dataReader.ReadByte());
@@ -110,7 +117,7 @@ namespace pad.core
                     {
                         if (data == 0x00)
                         {
-                            dataString += "\tdb \"" + AmigaExecutable.Encoding.GetString(stringDataBuffer.ToArray()) + "\"" + newline;
+                            dataString += $"Str{stringIndex++:x6}\t\tdc.b \"" + AmigaExecutable.Encoding.GetString(stringDataBuffer.ToArray()) + "\",0" + newline;
                             stringDataBuffer.Clear();
                         }
                         else
@@ -120,7 +127,7 @@ namespace pad.core
                     }
 
                     if (stringDataBuffer.Count != 0)
-                        dataString += "\tdb \"" + AmigaExecutable.Encoding.GetString(stringDataBuffer.ToArray()) + "\"" + newline;
+                        dataString += $"Str{stringIndex++:x6}\t\tdc.b \"" + AmigaExecutable.Encoding.GetString(stringDataBuffer.ToArray()) + "\",0" + newline;
 
                     asm.Add(dataOffset, newline + dataString.TrimEnd());
                 }
@@ -129,7 +136,7 @@ namespace pad.core
                     for (int i = 0; i < currentData.Count / 2; ++i)
                     {
                         string prefix = i == 0 ? newline : "";
-                        asm.Add(dataOffset + i * 2, prefix + $"\tdb ${((uint)currentData[i * 2] << 8) | currentData[i * 2 + 1]:x4}");
+                        asm.Add(dataOffset + i * 2, prefix + $"Dat{wordIndex++:x6}\t\tdc.w ${((uint)currentData[i * 2] << 8) | currentData[i * 2 + 1]:x4}");
                     }
                 }
             }
@@ -162,10 +169,6 @@ namespace pad.core
                 if (processedOffsets.Contains(dataReader.Position))
                     break; // all done
 
-                // TODO: also mark additional words of that instruction as "processed"
-                // The total length is given in the opcode, just skip the first two bytes.
-                // The size is always a multiple of 2.
-
                 processedOffsets.Add(codeOffset);
                 stop = false;
 
@@ -173,7 +176,7 @@ namespace pad.core
 
                 stop = stop || currentAsm.StartsWith("RT") || currentAsm.StartsWith("TRAP");
 
-                asm.Add(codeOffset, "\t" + ReplaceLabels(currentAsm));
+                asm.Add(codeOffset, "\t\t\t\t" + ReplaceLabels(currentAsm));
                 currentAsmLabelReplacements.Clear();
 
                 if (stop)

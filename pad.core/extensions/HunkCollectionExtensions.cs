@@ -17,5 +17,22 @@ namespace pad.core.extensions
             => hunks.Where(h => h.Type == HunkType.BSS).Cast<Hunk>();
         public static IEnumerable<Hunk> GetEndHunks(this IEnumerable<IHunk> hunks)
             => hunks.Where(h => h.Type == HunkType.End).Cast<Hunk>();
+
+        public static string GetSectionHeader(this IList<IHunk> hunks, int index)
+        {
+            if (index == 0)
+                return "entry:";
+
+            var type = hunks[index].Type;
+            int indexOfType = 1;
+            for (int i = 0; i < index; ++i)
+            {
+                if (hunks[i].Type == type)
+                    ++indexOfType;
+            }
+            string name = $"{type}{indexOfType}";
+
+            return $"SECTION \"{name}\",CODE";
+        }
     }
 }
