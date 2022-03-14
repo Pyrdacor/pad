@@ -33,7 +33,10 @@ namespace pad.core
         // Jumps to other code hunks
         readonly Dictionary<int, List<UnresolvedJump>> externalJumps = new();
         readonly Dictionary<int, string> asm = new();
-        HashSet<int> processedOffsets = new();
+        readonly HashSet<int> processedOffsets = new();
+        readonly string[] addressRegisters = new string[7]; // A0 to A6 only
+        readonly Regex moveaRegex = new Regex(@"MOVEA\.[WL] (.*),A([0-6])", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        readonly Regex leaRegex = new Regex(@"LEA\.[WL] (.*),A([0-6])", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public CodeHunk(int index, IDataReader dataReader, Dictionary<uint, List<uint>> relocs)
         {
@@ -176,8 +179,20 @@ namespace pad.core
                 OpcodeProcessor.ProcessNextOpcode(dataReader, handlers);
 
                 stop = stop || currentAsm.StartsWith("RT") || currentAsm.StartsWith("TRAP");
+                currentAsm = ReplaceLabels(currentAsm);
 
-                asm.Add(codeOffset, "\t\t\t\t" + ReplaceLabels(currentAsm));
+                void CheckAddressRegister(Regex regex)
+                {
+                    var match = regex.Match(currentAsm);
+
+                    if (match.Success)
+                        addressRegisters[int.Parse(match.Groups[2].Value)] = match.Groups[1].Value;
+                }
+
+                CheckAddressRegister(leaRegex);
+                CheckAddressRegister(moveaRegex);
+
+                asm.Add(codeOffset, "\t\t\t\t" + currentAsm);
                 currentAsmLabelReplacements.Clear();
 
                 if (stop)
@@ -259,25 +274,117 @@ namespace pad.core
                 }
                 else
                 {
-                    var match = Regex.Match(jumpTarget, @"^\(\$([0-9a-fA-F]+),PC\)$");
-
-                    if (match.Success)
+                    bool MatchDisplacement(string pattern, out string displacement, out int index)
                     {
-                        int displacement = int.Parse(match.Groups[1].Value, System.Globalization.NumberStyles.AllowHexSpecifier);
-                        int address = (int)jumpCallOffset + displacement;
+                        var match = Regex.Match(jumpTarget, pattern);
 
-                        if (address >= 0 && address < dataReader.Size)
+                        if (match.Success)
                         {
-                            labels.Add((uint)address, string.Format(subRoutine ? Global.FunctionFormatString : Global.LabelFormatString, hunkOffsets[Index] + address));
-                            if (subRoutine && !processedBranchOffsets.Contains(dataReader.Position))
-                                branchOffsets.Add(dataReader.Position);
-                            dataReader.Position = address;
+                            displacement = match.Groups[1].Value;
+                            index = int.Parse(match.Groups[2].Value);
+                            return true;
+                        }
+
+                        displacement = "";
+                        index = 0;
+                        return false;
+                    }
+
+                    bool Match(string pattern, out int index)
+                    {
+                        var match = Regex.Match(jumpTarget, pattern);
+
+                        if (match.Success)
+                        {
+                            index = int.Parse(match.Groups[1].Value);
+                            return true;
+                        }
+
+                        index = 0;
+                        return false;
+                    }
+
+                    int index;
+
+                    if (Match(@"\(A([0-6])\)", out index))
+                    {
+                        if (HandleAddress(index))
                             return;
-                        }
-                        else if (address >= dataReader.Size)
+                    }
+                    else if (Match(@"-\(A([0-6])\)", out index))
+                    {
+                        if (HandleAddress(index))
+                            return;
+                    }
+                    else if (Match(@"\(A([0-6])\)+", out index))
+                    {
+                        if (HandleAddress(index))
+                            return;
+                    }
+                    else if (MatchDisplacement(@"\((.*),A([0-6])\)", out string displacement, out index))
+                    {
+                        // TODO
+
+                        if (HandleAddress(index))
+                            return;
+                    }
+                    else
+                    {
+                        // PC + displacement
+                        var match = Regex.Match(jumpTarget, @"^\(\$([0-9a-fA-F]+),PC\)$");
+
+                        if (match.Success)
                         {
-                            throw new IndexOutOfRangeException("Jump address was outside of range.");
+                            int d = int.Parse(match.Groups[1].Value, System.Globalization.NumberStyles.AllowHexSpecifier);
+                            int address = (int)jumpCallOffset + d;
+
+                            if (address >= 0 && address < dataReader.Size)
+                            {
+                                labels.Add((uint)address, string.Format(subRoutine ? Global.FunctionFormatString : Global.LabelFormatString, hunkOffsets[Index] + address));
+                                if (subRoutine && !processedBranchOffsets.Contains(dataReader.Position))
+                                    branchOffsets.Add(dataReader.Position);
+                                dataReader.Position = address;
+                                return;
+                            }
+                            else if (address >= dataReader.Size)
+                            {
+                                throw new IndexOutOfRangeException("Jump address was outside of range.");
+                            }
                         }
+
+                        // TODO: PC + index
+                    }
+
+                    bool HandleAddress(int index)
+                    {
+                        if (addressRegisters[index] is not null)
+                        {
+                            if (addressRegisters[index].StartsWith(Global.LabelPrefix))
+                            {
+                                var label = labels.FirstOrDefault(l => l.Value == addressRegisters[index]);
+                                dataReader.Position = (int)label.Key;
+
+                                if (subRoutine)
+                                    RenameLabel(addressRegisters[index], addressRegisters[index].Replace(Global.LabelPrefix, Global.FunctionPrefix));
+                            }
+                            else if (addressRegisters[index].StartsWith(Global.FunctionPrefix))
+                            {
+                                var label = labels.FirstOrDefault(l => l.Value == addressRegisters[index]);
+                                dataReader.Position = (int)label.Key;
+                            }
+                            else if (addressRegisters[index].StartsWith(Global.DataPrefix))
+                            {
+                                var label = labels.FirstOrDefault(l => l.Value == addressRegisters[index]);
+                                dataReader.Position = (int)label.Key;
+
+                                if (subRoutine)
+                                    RenameLabel(addressRegisters[index], addressRegisters[index].Replace(Global.DataPrefix, Global.FunctionPrefix));
+                                else
+                                    RenameLabel(addressRegisters[index], addressRegisters[index].Replace(Global.DataPrefix, Global.LabelPrefix));
+                            }
+                        }
+
+                        return false;
                     }
 
                     unresolvedJumps.Add(new UnresolvedJump(jumpTarget, jumpCallOffset));
@@ -286,6 +393,22 @@ namespace pad.core
                     // On the other hand a normal jump can not be expected to return, so just stop execution here.
                     if (!subRoutine) 
                         stop = true;
+                }
+            }
+
+            void RenameLabel(string oldName, string newName)
+            {
+                var label = labels.FirstOrDefault(l => l.Value == oldName);
+
+                if (label.Key != 0)
+                    labels[label.Key] = newName;
+
+                var reference = references[Index].FirstOrDefault(r => r.Label == oldName && r.SourceHunkIndex == Index && r.TargetHunkIndex == Index);
+
+                if (reference is not null)
+                {
+                    references[Index].Remove(reference);
+                    references[Index].Add(new Reference(newName, Index, reference.SourceOffset, Index, reference.RelativeOffset));
                 }
             }
 
