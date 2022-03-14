@@ -1,6 +1,7 @@
 ﻿using pad.core.interfaces;
 using pad.core.opcodes;
 using pad.core.serialization;
+using System.Text.RegularExpressions;
 
 namespace pad.core
 {
@@ -250,13 +251,35 @@ namespace pad.core
                     }
                     else
                     {
-                        if (subRoutine) // Sub-routines will return, so the code after this instruction will be called as well. Mark it as a branch to process it later.
+                        // Sub-routines will return, so the code after this instruction will be called as well. Mark it as a branch to process it later.
+                        if (subRoutine && !processedBranchOffsets.Contains(dataReader.Position))
                             branchOffsets.Add(dataReader.Position);
                         dataReader.Position = int.Parse(jumpTarget[4..12], System.Globalization.NumberStyles.AllowHexSpecifier);
                     }
                 }
                 else
                 {
+                    var match = Regex.Match(jumpTarget, @"^\(\$([0-9a-fA-F]+),PC\)$");
+
+                    if (match.Success)
+                    {
+                        int displacement = int.Parse(match.Groups[1].Value, System.Globalization.NumberStyles.AllowHexSpecifier);
+                        int address = (int)jumpCallOffset + displacement;
+
+                        if (address >= 0 && address < dataReader.Size)
+                        {
+                            labels.Add((uint)address, string.Format(subRoutine ? Global.FunctionFormatString : Global.LabelFormatString, hunkOffsets[Index] + address));
+                            if (subRoutine && !processedBranchOffsets.Contains(dataReader.Position))
+                                branchOffsets.Add(dataReader.Position);
+                            dataReader.Position = address;
+                            return;
+                        }
+                        else if (address >= dataReader.Size)
+                        {
+                            throw new IndexOutOfRangeException("Jump address was outside of range.");
+                        }
+                    }
+
                     unresolvedJumps.Add(new UnresolvedJump(jumpTarget, jumpCallOffset));
 
                     // A jump to a sub-routine will always return at some time or at least is expected to, so continue after the instruction in this case.
@@ -273,13 +296,14 @@ namespace pad.core
                     if (!relocs.TryGetValue(reference.Value.UsageOffset, out int hunkIndex))
                     {
                         if (reference.Value.RelativeAddress == 0x00000004 || // special address
+                            reference.Value.RelativeAddress >= 0x00bfd000 && reference.Value.RelativeAddress < 0x00bfef02 || // Amiga hardware registers
                             reference.Value.RelativeAddress >= 0x00dff000 && reference.Value.RelativeAddress < 0x00e00000) // Amiga hardware registers
                         {
                             currentAsmLabelReplacements.Add(reference.Key, $"#${reference.Value.RelativeAddress:x8}");
                             continue;
                         }
 
-                        throw new InvalidDataException($"Missing reloc entry for reference in hunk {Index} at offset ${reference.Value:x8}.");
+                        throw new InvalidDataException($"Missing reloc entry for reference in hunk {Index} at offset ${reference.Value.RelativeAddress:x8}.");
                     }
 
                     string label = reference.Key;

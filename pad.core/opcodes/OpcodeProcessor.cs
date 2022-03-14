@@ -233,7 +233,7 @@ namespace pad.core.opcodes
                 if (references.ContainsKey(jump.JumpTarget.TrimEnd(new char[] { '.', 'l' })))
                     handlers.JumpHandler(pc - 4, jump.JumpTarget, jump.SubRoutine);
                 else
-                    handlers.JumpHandler(pc, jump.JumpTarget, jump.SubRoutine);
+                    handlers.JumpHandler(pc + 2 - (uint)binarySize, jump.JumpTarget, jump.SubRoutine);
             }
         }
     }

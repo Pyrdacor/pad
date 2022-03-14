@@ -134,7 +134,7 @@ namespace pad.core.opcodes
                     if (word)
                         throw new InvalidOperationException("Stack pointer should not be used with .W suffix.");
                 }
-                index += word ? "W" : "L"; // type of index register (word or long)
+                index += word ? "W" : ""; // type of index register (word or long)
                 sbyte displacement = ByteConverter.AsSigned((byte)(extensionWord & 0xff));
                 string baseRegister = pc ? "PC" : $"A{regBits}";
 
@@ -174,13 +174,13 @@ namespace pad.core.opcodes
                 2 => $"({AName()})", // Address
                 3 => $"({AName()})+", // Address with postincrement
                 4 => $"-({AName()})", // Address with predecrement
-                5 => $"(${dataReader.ReadDisplacement()},{AName()})", // Address with displacement
+                5 => $"({dataReader.ReadDisplacement()},{AName()})", // Address with displacement
                 6 => ReadAddressWithIndex(false), // Address with index
                 7 => regBits switch
                 {
                     0 => throw new NotSupportedException("Absolute short addresses are not supported."), // Absolute short address
                     1 => HandleAbsoluteLongReference(), // Absolute long address, TODO: Use label names?
-                    2 => $"(${dataReader.ReadDisplacement()},PC)", // Program counter with displacement
+                    2 => $"({dataReader.ReadDisplacement()},PC)", // Program counter with displacement
                     3 => ReadAddressWithIndex(true), // Program counter with index
                     4 => immediateBytes switch
                     {
